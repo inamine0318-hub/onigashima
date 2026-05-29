@@ -303,6 +303,19 @@ document.addEventListener('keydown',e=>{
   if(state==='splash'){state='title';bgmPlay('title');}
   else if(state==='title'&&(e.key==='Enter'||e.key===' ')){bgmPlay('title');state='story';storyStartTime=Date.now();storyDone=false;}
   else if(state==='story'&&(e.key==='Enter'||e.key===' ')){if(storyDone)state='charselect';else storyDone=true;}
+  else if(state==='charselect'){
+    const max=motoUnlocked?3:2;
+    if(e.key==='ArrowLeft'||e.key==='a')selChar=Math.max(0,selChar-1);
+    if(e.key==='ArrowRight'||e.key==='d')selChar=Math.min(max,selChar+1);
+    if(e.key==='Enter'||e.key===' '){tryFullscreen();startGame(true);}
+  }
+  else if(state==='gameover'&&(e.key==='Enter'||e.key===' ')){clearSave();state='charselect';bgmPlay('title');}
+  else if(state==='stageclear'&&(e.key==='Enter'||e.key===' ')){
+    if(clearResultTimer>0)return;
+    if(currentStage<TOTAL_STAGES){const nxt=currentStage+1;setSave({stage:nxt,score,char:selChar,curseGauge});currentStage=nxt;startGame();}
+    else{clearSave();endingStartTime=Date.now();endingDone=false;state='ending';}
+  }
+  else if(state==='ending'&&(e.key==='Enter'||e.key===' ')&&endingDone){clearSave();currentStage=1;state='charselect';bgmPlay('title');}
   else if(state==='play'){
     if(e.key==='Escape'){paused=!paused;if(paused)bgmStop();else bgmPlay(bossTriggered?'boss':'play');}
     if(!paused){
