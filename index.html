@@ -1059,30 +1059,38 @@ function drawPlatforms(){
 // ================================================================
 //  キャラクター描画
 // ================================================================
-function drawPlayer(){
-  if(!player)return;
-  const px=player.x-cam.x, py=player.y;
-  const f=player.facing;
-  if(player.invincible>0&&Math.floor(frameTime/80)%2)return;
-
-  ctx.save();
-  const cx=f>0?px:px+player.w;
-  ctx.translate(cx,py);ctx.scale(f,1);
-  const ci=player.ci;
-
+const VS=1.6; // 視覚スケール（当たり判定より大きく描く）
+function drawCharAt(ci){
   switch(ci){
     case 0: drawJubei();break;
     case 1: drawKarasu();break;
     case 2: drawMataki();break;
     case 3: drawMomotaro();break;
   }
+}
+function drawPlayer(){
+  if(!player)return;
+  const px=player.x-cam.x, py=player.y;
+  const f=player.facing;
+  if(player.invincible>0&&Math.floor(frameTime/80)%2)return;
+  const ci=player.ci;
+  const cw=CHARS[ci].w, ch=CHARS[ci].h;
+
+  ctx.save();
+  // 足元を基準にVSスケールで拡大
+  ctx.translate(f>0?px:px+cw, py+ch);
+  ctx.scale(f*VS, VS);
+  ctx.translate(0, -ch);
+  drawCharAt(ci);
   ctx.restore();
 
   // ダッシュエフェクト
   if(player.dashActive){
     ctx.globalAlpha=0.3;
-    ctx.save();ctx.translate(cx-f*14,py);ctx.scale(f,1);
-    switch(ci){case 0:drawJubei();break;case 1:drawKarasu();break;case 2:drawMataki();break;case 3:drawMomotaro();break;}
+    ctx.save();
+    ctx.translate(f>0?px-f*18:px+cw-f*18, py+ch);
+    ctx.scale(f*VS, VS);ctx.translate(0,-ch);
+    drawCharAt(ci);
     ctx.restore();
     ctx.globalAlpha=1;
   }
@@ -1638,11 +1646,12 @@ function drawCharSelect(){
     if(sel){dr(b.x,b.y,b.w,3,'#66aaff');}
     // キャラ描画（縮小）
     ctx.save();
-    const scale=1.4;
-    ctx.translate(b.x+b.w/2,b.y+b.h*.5);
+    const scale=2.2;
+    const cw=CHARS[i].w,ch=CHARS[i].h;
+    ctx.translate(b.x+b.w/2, b.y+b.h*.85);
     ctx.scale(scale,scale);
-    ctx.translate(-CHARS[i].w/2,-CHARS[i].h/2);
-    switch(i){case 0:drawJubei();break;case 1:drawKarasu();break;case 2:drawMataki();break;case 3:drawMomotaro();break;}
+    ctx.translate(-cw/2,-ch);
+    drawCharAt(i);
     ctx.restore();
     // 名前
     txt(locked?'???':c.name,b.x+b.w/2,b.y+b.h+16,sel?'#88ccff':'#667788',Math.min(W*.028,14));
