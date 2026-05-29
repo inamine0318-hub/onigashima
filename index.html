@@ -189,6 +189,7 @@ let storyStartTime=0,storyDone=false;
 let enemies=[],projectiles=[],eProjectiles=[],particles=[];
 let platforms=[];
 let treasures=[];
+let weaponOrbs=[];
 let boss=null,bossTriggered=false,bossPhase2Started=false;
 let bossDefeated=false;
 let stageBriefTimer=0;
@@ -259,7 +260,7 @@ canvas.addEventListener('touchstart',e=>{
     if(clearResultTimer>0)return;
     if(currentStage<TOTAL_STAGES){
       const nxt=currentStage+1;
-      setSave({stage:nxt,score,char:selChar,curseGauge});
+      setSave({stage:nxt,score,char:selChar,curseGauge,motoUnlocked});
       currentStage=nxt;startGame();
     }else{clearSave();endingStartTime=Date.now();endingDone=false;state='ending';}
     return;
@@ -444,6 +445,19 @@ function updatePlayer(){
     }
   }
 
+  // 武器強化オーブ取得
+  for(let i=weaponOrbs.length-1;i>=0;i--){
+    const o=weaponOrbs[i];
+    if(player.x+player.w>o.x&&player.x<o.x+o.w&&player.y+player.h>o.y&&player.y<o.y+o.h){
+      weaponOrbs.splice(i,1);
+      if(player.weaponLv<2){
+        player.weaponLv++;
+        sfx('coin');
+        damageNums.push({x:player.x+player.w/2,y:player.y-10,v:-1.5,life:55,txt:`WPN Lv${player.weaponLv}!`,col:'#cc44ff'});
+      }
+    }
+  }
+
   // ダメージ数値更新
   for(let i=damageNums.length-1;i>=0;i--){
     damageNums[i].y+=damageNums[i].v;damageNums[i].life--;
@@ -596,7 +610,7 @@ function checkStomp(){
       e.hp-=dmg;e.hitFlash=8;
       sfx('stomp');addShake(2);
       damageNums.push({x:e.x+e.w/2,y:e.y,v:-1,life:30,txt:String(dmg),col:'#ffdd44'});
-      if(e.hp<=0){e.dead=true;score+=e.score||30;burst(e.x+e.w/2,e.y+e.h/2,'#ff6600',8);}
+      if(e.hp<=0){e.dead=true;score+=e.score||30;burst(e.x+e.w/2,e.y+e.h/2,'#ff6600',8);dropWeaponOrb(e);}
       // トランポリンジャンプ
       player.vy=-10;player.onGround=false;player.canDjump=player.djump;
       return;
@@ -631,24 +645,48 @@ function spawnEnemies(){
 
 function buildEnemyPlacements(){
   const pl=[];
-  const types=['red_minion','blue_minion','bat'];
-  // ST1: 残党鬼 + コウモリ
-  // 一定間隔で配置
-  for(let i=0;i<12;i++){
-    const x=400+i*450+Math.random()*100;
-    const t=i<8?'red_minion':(i<10?'blue_minion':'bat');
-    const y=t==='bat'?H-200:H-40-28;
-    pl.push({type:t,x,y});
-  }
+  const G=H-40;
+  const sets=[
+    // ST1: 残党鬼・青鬼・コウモリ
+    [{t:'red_minion',n:8,yOfs:28},{t:'blue_minion',n:4,yOfs:30},{t:'bat',n:4,yOfs:200,fly:true}],
+    // ST2: 岩喰い虫・地底鬼・毒グモ
+    [{t:'rock_beetle',n:6,yOfs:32},{t:'earth_oni',n:5,yOfs:28},{t:'poison_spider',n:5,yOfs:22}],
+    // ST3: 火炎鬼・溶岩スライム・コウモリ
+    [{t:'flame_oni',n:6,yOfs:30},{t:'lava_slime',n:6,yOfs:20},{t:'bat',n:4,yOfs:200,fly:true}],
+    // ST4: 封印守・影鬼・浮遊霊
+    [{t:'seal_guard',n:5,yOfs:38},{t:'shadow_oni',n:5,yOfs:28},{t:'ghost',n:4,yOfs:150,fly:true}],
+    // ST5: 深淵の眷属・異形
+    [{t:'abyss_spawn',n:8,yOfs:22},{t:'corrupted_oni',n:4,yOfs:32},{t:'eye_monster',n:4,yOfs:180,fly:true}],
+  ];
+  const cfg=sets[currentStage-1]||sets[0];
+  let x=400;
+  cfg.forEach(grp=>{
+    for(let i=0;i<grp.n;i++){
+      pl.push({type:grp.t,x:x+i*480+Math.random()*120,y:grp.fly?G-grp.yOfs:G-grp.yOfs});
+    }
+    x+=200;
+  });
   return pl;
 }
 
 function createEnemy(type,x,y){
+  const hp=(v)=>Math.ceil(v*(1+curseGauge/200)); // 呪いゲージで強化
   switch(type){
-    case 'red_minion': return{type,x,y,w:24,h:28,hp:3,maxHp:3,vx:-0.8,vy:0,facing:-1,onGround:false,dead:false,hitFlash:0,score:30,patrol:true,patrolRange:120,patrolOrigin:x};
-    case 'blue_minion':return{type,x,y,w:22,h:30,hp:5,maxHp:5,vx:-0.6,vy:0,facing:-1,onGround:false,dead:false,hitFlash:0,score:50,patrol:true,patrolRange:160,patrolOrigin:x,throws:true,throwCd:0};
-    case 'bat':        return{type,x,y,w:20,h:14,hp:2,maxHp:2,vx:-1.2,vy:0,facing:-1,onGround:false,dead:false,hitFlash:0,score:20,fly:true};
-    default:           return{type,x,y,w:24,h:28,hp:2,maxHp:2,vx:-0.8,vy:0,facing:-1,onGround:false,dead:false,hitFlash:0,score:20};
+    case 'red_minion':   return{type,x,y,w:24,h:28,hp:hp(3),maxHp:hp(3),vx:-0.8,vy:0,facing:-1,onGround:false,dead:false,hitFlash:0,score:30,patrol:true,patrolRange:120,patrolOrigin:x};
+    case 'blue_minion':  return{type,x,y,w:22,h:30,hp:hp(5),maxHp:hp(5),vx:-0.6,vy:0,facing:-1,onGround:false,dead:false,hitFlash:0,score:50,patrol:true,patrolRange:160,patrolOrigin:x,throws:true,throwCd:0};
+    case 'bat':          return{type,x,y,w:20,h:14,hp:hp(2),maxHp:hp(2),vx:-1.2,vy:0,facing:-1,onGround:false,dead:false,hitFlash:0,score:20,fly:true};
+    case 'rock_beetle':  return{type,x,y,w:28,h:20,hp:hp(8),maxHp:hp(8),vx:-0.5,vy:0,facing:-1,onGround:false,dead:false,hitFlash:0,score:40,patrol:true,patrolRange:100,patrolOrigin:x,shell:true};
+    case 'earth_oni':    return{type,x,y,w:26,h:32,hp:hp(6),maxHp:hp(6),vx:-0.7,vy:0,facing:-1,onGround:false,dead:false,hitFlash:0,score:50,patrol:true,patrolRange:140,patrolOrigin:x,throws:true,throwCd:0,jumpAtk:true,jumpCd:0};
+    case 'poison_spider':return{type,x,y,w:22,h:18,hp:hp(4),maxHp:hp(4),vx:-1.0,vy:0,facing:-1,onGround:false,dead:false,hitFlash:0,score:35,patrol:true,patrolRange:80,patrolOrigin:x,spits:true,spitCd:0};
+    case 'flame_oni':    return{type,x,y,w:26,h:32,hp:hp(7),maxHp:hp(7),vx:-0.8,vy:0,facing:-1,onGround:false,dead:false,hitFlash:0,score:55,patrol:true,patrolRange:130,patrolOrigin:x,throws:true,throwCd:0,throwType:'fire'};
+    case 'lava_slime':   return{type,x,y,w:20,h:20,hp:hp(4),maxHp:hp(4),vx:-0.6,vy:0,facing:-1,onGround:false,dead:false,hitFlash:0,score:30,patrol:true,patrolRange:60,patrolOrigin:x,bouncy:true,bounceTimer:0};
+    case 'seal_guard':   return{type,x,y,w:28,h:40,hp:hp(12),maxHp:hp(12),vx:-0.5,vy:0,facing:-1,onGround:false,dead:false,hitFlash:0,score:80,patrol:true,patrolRange:100,patrolOrigin:x,shield:true,shieldHp:3};
+    case 'shadow_oni':   return{type,x,y,w:24,h:30,hp:hp(6),maxHp:hp(6),vx:-1.0,vy:0,facing:-1,onGround:false,dead:false,hitFlash:0,score:60,patrol:true,patrolRange:180,patrolOrigin:x,blinks:true,blinkCd:0};
+    case 'ghost':        return{type,x,y,w:20,h:26,hp:hp(3),maxHp:hp(3),vx:-0.8,vy:0,facing:-1,onGround:false,dead:false,hitFlash:0,score:40,fly:true,phaseTimer:0};
+    case 'abyss_spawn':  return{type,x,y,w:18,h:20,hp:hp(4),maxHp:hp(4),vx:-1.4,vy:0,facing:-1,onGround:false,dead:false,hitFlash:0,score:35,patrol:true,patrolRange:200,patrolOrigin:x};
+    case 'corrupted_oni':return{type,x,y,w:32,h:38,hp:hp(15),maxHp:hp(15),vx:-0.6,vy:0,facing:-1,onGround:false,dead:false,hitFlash:0,score:100,patrol:true,patrolRange:120,patrolOrigin:x,throws:true,throwCd:0};
+    case 'eye_monster':  return{type,x,y,w:22,h:22,hp:hp(5),maxHp:hp(5),vx:-1.2,vy:0,facing:-1,onGround:false,dead:false,hitFlash:0,score:50,fly:true,shoots:true,shootCd:0};
+    default:             return{type,x,y,w:24,h:28,hp:hp(3),maxHp:hp(3),vx:-0.8,vy:0,facing:-1,onGround:false,dead:false,hitFlash:0,score:20};
   }
 }
 
@@ -691,10 +729,55 @@ function updateEnemies(){
         if(e.throwCd>0)e.throwCd--;
         else if(Math.abs(player.x-(e.x+e.w/2))<250&&Math.random()<0.005){
           const f=player.x>e.x?1:-1;
-          eProjectiles.push({x:e.x+e.w/2,y:e.y+e.h/3,vx:f*4,vy:-3,w:10,h:10,col:'#884400',dmg:1,life:90,rock:true});
+          const throwCol=e.throwType==='fire'?'#ff6600':'#884400';
+          eProjectiles.push({x:e.x+e.w/2,y:e.y+e.h/3,vx:f*4,vy:-3,w:10,h:10,col:throwCol,dmg:1,life:90,rock:true});
           e.throwCd=120;
         }
       }
+    }
+
+    // 特殊行動
+    switch(e.type){
+      case 'earth_oni':
+        if(e.jumpCd>0){e.jumpCd--;}
+        else if(e.onGround&&Math.abs(player.x-(e.x+e.w/2))<200&&Math.random()<0.01){
+          e.vy=-9;e.vx=(player.x>e.x?1:-1)*3;e.onGround=false;e.jumpCd=120;
+        }
+        break;
+      case 'poison_spider':
+        if(e.spitCd>0){e.spitCd--;}
+        else if(Math.abs(player.x-(e.x+e.w/2))<220&&Math.random()<0.01){
+          const f=player.x>e.x?1:-1;
+          eProjectiles.push({x:e.x+e.w/2,y:e.y+e.h/2,vx:f*3.5,vy:-1.5,w:8,h:8,col:'#8800cc',dmg:1,life:80});
+          e.spitCd=90;sfx('arrow');
+        }
+        break;
+      case 'lava_slime':
+        if(e.bounceTimer>0){e.bounceTimer--;}
+        else if(e.onGround&&Math.random()<0.025){
+          e.vy=-7;e.onGround=false;e.bounceTimer=60;
+          burst(e.x+e.w/2,e.y+e.h,'#ff4400',4);
+        }
+        break;
+      case 'shadow_oni':
+        if(e.blinkCd>0){e.blinkCd--;}
+        else if(Math.random()<0.005&&Math.abs(player.x-(e.x+e.w/2))<400){
+          const sign=Math.random()<.5?-1:1;
+          e.x=Math.max(cam.x+20,player.x+sign*70);
+          e.blinkCd=160;
+          burst(e.x+e.w/2,e.y+e.h/2,'#880088',8);
+        }
+        break;
+      case 'eye_monster':
+        if(e.shootCd>0){e.shootCd--;}
+        else if(Math.abs(player.x-(e.x+e.w/2))<300&&Math.random()<0.012){
+          const dx=player.x+player.w/2-(e.x+e.w/2);
+          const dy=player.y+player.h/2-(e.y+e.h/2);
+          const dist=Math.max(1,Math.hypot(dx,dy));
+          eProjectiles.push({x:e.x+e.w/2,y:e.y+e.h/2,vx:dx/dist*4,vy:dy/dist*4,w:8,h:8,col:'#cc00ff',dmg:1,life:90,grav:false});
+          e.shootCd=70;
+        }
+        break;
     }
 
     // プレイヤー接触ダメージ
@@ -721,7 +804,7 @@ function triggerBoss(){
     onGround:false,
     state:'idle',stateTimer:60,
     phase:1,hitFlash:0,
-    chargeDir:0,
+    chargeDir:0,hidden:false,
   };
   bgmStop();bgmPlay('boss');addShake(8);sfx('boss');
 }
@@ -781,6 +864,63 @@ function updateBoss(){
       }
       if(boss.stateTimer<=0){boss.state='idle';boss.stateTimer=50;}
       break;
+    case 'burrow':
+      boss.vx*=0.8;
+      boss.hidden=(boss.stateTimer>20);
+      if(boss.stateTimer===20){
+        boss.x=Math.max(GOAL_X-W+20,Math.min(player.x+boss.facing*50,GOAL_X-boss.w-10));
+        boss.y=H-40-boss.h;
+        for(let k=-2;k<=2;k++){
+          eProjectiles.push({x:boss.x+boss.w/2,y:boss.y,vx:k*3,vy:-6-Math.random()*4,w:12,h:12,col:'#8a6a30',dmg:1,life:60,rock:true});
+        }
+        addShake(6);sfx('boom');
+      }
+      break;
+    case 'ladle_throw':
+      boss.vx*=0.85;
+      if(boss.stateTimer===30){
+        const cnt=boss.phase===2?5:3;
+        const dx=player.x+player.w/2-(boss.x+boss.w/2);
+        const dy=player.y+player.h/2-(boss.y+boss.h/2);
+        const dist=Math.max(1,Math.hypot(dx,dy));
+        for(let k=0;k<cnt;k++){
+          const a=(k-(cnt-1)/2)*0.35;
+          eProjectiles.push({x:boss.x+boss.w/2,y:boss.y+boss.h/3,vx:dx/dist*6+Math.sin(a)*3,vy:dy/dist*6-4+Math.cos(a)*2,w:14,h:14,col:'#ff6600',dmg:1,life:80,rock:true});
+        }
+        sfx('boom');addShake(3);
+      }
+      break;
+    case 'seal_beam':
+      boss.vx*=0.85;
+      if(boss.stateTimer===35){
+        const cnt=boss.phase===2?5:3;
+        const f=boss.facing;
+        for(let k=0;k<cnt;k++){
+          eProjectiles.push({x:boss.x+(f>0?boss.w:0),y:boss.y+10+k*12,vx:f*7,vy:-0.3+k*0.25,w:14,h:8,col:'#8888ff',dmg:1,life:55,grav:false});
+        }
+        sfx('arrow');addShake(4);
+      }
+      break;
+    case 'dark_pulse':
+      boss.vx*=0.85;
+      if(boss.stateTimer===35){
+        const cnt=boss.phase===2?12:8;
+        for(let k=0;k<cnt;k++){
+          const a=(k/cnt)*Math.PI*2;
+          eProjectiles.push({x:boss.x+boss.w/2,y:boss.y+boss.h/2,vx:Math.cos(a)*5,vy:Math.sin(a)*5,w:10,h:10,col:'#cc00ff',dmg:1,life:70,grav:false});
+        }
+        addShake(5);sfx('boss');
+      }
+      break;
+    case 'nova':
+      boss.vx*=0.8;
+      if(boss.stateTimer===40){
+        for(let k=0;k<8;k++){
+          eProjectiles.push({x:boss.x+boss.w/2+(k-4)*28,y:boss.y-20,vx:(Math.random()-.5),vy:4+Math.random()*2,w:10,h:10,col:'#880088',dmg:1,life:110,grav:false});
+        }
+        sfx('boom');addShake(4);
+      }
+      break;
   }
 
   // 移動
@@ -807,9 +947,40 @@ function chooseBossAtk(){
   const p2=boss.phase===2;
   const dx=Math.abs((player.x+player.w/2)-(boss.x+boss.w/2));
   const r=Math.random();
-  if(dx>200&&r<0.4){boss.state='charge';boss.stateTimer=55;boss.chargeDir=boss.facing;}
-  else if(r<0.6){boss.state='slam';boss.stateTimer=50;}
-  else{boss.state='throw';boss.stateTimer=40;}
+  switch(boss.type){
+    case 'rock_worm':
+      if(r<0.35){boss.state='charge';boss.stateTimer=50;boss.chargeDir=boss.facing;}
+      else if(r<0.65){boss.state='burrow';boss.stateTimer=80;boss.hidden=true;}
+      else{boss.state='throw';boss.stateTimer=40;}
+      break;
+    case 'cauldron_oni':
+      if(dx>150&&r<0.4){boss.state='charge';boss.stateTimer=55;boss.chargeDir=boss.facing;}
+      else if(r<0.65){boss.state='ladle_throw';boss.stateTimer=55;}
+      else{boss.state='slam';boss.stateTimer=50;}
+      break;
+    case 'seal_guard':
+      if(r<0.3){boss.state='charge';boss.stateTimer=55;boss.chargeDir=boss.facing;}
+      else if(r<0.65){boss.state='seal_beam';boss.stateTimer=60;}
+      else{boss.state='throw';boss.stateTimer=45;}
+      break;
+    case 'rankkai':
+      if(r<0.25){boss.state='charge';boss.stateTimer=50;boss.chargeDir=boss.facing;}
+      else if(r<0.52){boss.state='dark_pulse';boss.stateTimer=55;}
+      else if(p2&&r<0.75){boss.state='nova';boss.stateTimer=60;}
+      else{boss.state='throw';boss.stateTimer=40;}
+      break;
+    default: // red_oni
+      if(dx>200&&r<0.4){boss.state='charge';boss.stateTimer=55;boss.chargeDir=boss.facing;}
+      else if(r<0.6){boss.state='slam';boss.stateTimer=50;}
+      else{boss.state='throw';boss.stateTimer=40;}
+      break;
+  }
+}
+
+function dropWeaponOrb(e){
+  if(player&&player.weaponLv<2&&Math.random()<0.15){
+    weaponOrbs.push({x:e.x+e.w/2-8,y:e.y,w:16,h:16,bob:Math.random()*Math.PI*2});
+  }
 }
 
 // ================================================================
@@ -831,7 +1002,7 @@ function updateProjectiles(){
       if(p.x+p.w>e.x&&p.x<e.x+e.w&&p.y+p.h>e.y&&p.y<e.y+e.h){
         e.hp-=p.dmg;e.hitFlash=8;
         damageNums.push({x:e.x+e.w/2,y:e.y-4,v:-1,life:30,txt:String(p.dmg),col:'#fff'});
-        if(e.hp<=0){e.dead=true;score+=e.score||30;burst(e.x+e.w/2,e.y+e.h/2,'#ff4400',8);}
+        if(e.hp<=0){e.dead=true;score+=e.score||30;burst(e.x+e.w/2,e.y+e.h/2,'#ff4400',8);dropWeaponOrb(e);}
         if(!p.pierce&&!p.spear&&!p.heavy&&!p.sword){projectiles.splice(i,1);break;}
         p.hit.push(j);
       }
@@ -883,12 +1054,13 @@ function updateParticles(){
 function startGame(fromCharSel){
   if(fromCharSel){
     const sv=getSave();
-    if(sv){currentStage=sv.stage||1;score=sv.score||0;curseGauge=sv.curseGauge||0;}
+    if(sv){currentStage=sv.stage||1;score=sv.score||0;curseGauge=sv.curseGauge||0;if(sv.motoUnlocked)motoUnlocked=true;}
     else{currentStage=1;score=0;curseGauge=0;}
   }
   player=initPlayer(selChar);
   cam={x:0};
   enemies=[];projectiles=[];eProjectiles=[];particles=[];
+  weaponOrbs=[];
   damageNums=[];
   boss=null;bossTriggered=false;bossDefeated=false;bossPhase2Started=false;
   hitStop=0;
@@ -903,30 +1075,84 @@ function startGame(fromCharSel){
 
 function buildPlatforms(){
   platforms=[];
-  const H_=H;
-  // 地面（無限地面をいくつかのブロックで表現）
-  platforms.push({x:-200,y:H_-40,w:GOAL_X+400,h:40}); // メイン地面
-  // ST別追加プラットフォーム
+  const G=H-40; // 地面Y
+  platforms.push({x:-200,y:G,w:GOAL_X+400,h:40});
   const layouts=[
-    // ST1: 鬼の砦入口
-    [
-      {x:300,y:H_-130,w:120,h:20},{x:500,y:H_-160,w:100,h:20},
-      {x:700,y:H_-120,w:140,h:20},{x:900,y:H_-180,w:80,h:20},
-      {x:1100,y:H_-140,w:120,h:20},{x:1350,y:H_-200,w:90,h:20},
-      {x:1600,y:H_-150,w:110,h:20},{x:1800,y:H_-120,w:130,h:20},
-      {x:2100,y:H_-170,w:90,h:20},{x:2400,y:H_-140,w:120,h:20},
-      {x:2700,y:H_-200,w:80,h:20},{x:3000,y:H_-160,w:100,h:20},
-      {x:3300,y:H_-130,w:140,h:20},{x:3600,y:H_-180,w:90,h:20},
-      {x:3900,y:H_-150,w:110,h:20},{x:4200,y:H_-120,w:130,h:20},
-      {x:4500,y:H_-170,w:90,h:20},{x:4800,y:H_-200,w:80,h:20},
-      {x:5100,y:H_-140,w:100,h:20},{x:5400,y:H_-160,w:120,h:20},
-    ],
-    // ST2-5はST1と同じ仮配置（後で個別設計）
+    // ST1: 鬼の砦入口（標準的な足場）
+    [{x:300,y:G-90,w:120,h:16},{x:500,y:G-120,w:100,h:16},
+     {x:700,y:G-80,w:140,h:16},{x:950,y:G-150,w:80,h:16},
+     {x:1150,y:G-100,w:120,h:16},{x:1400,y:G-160,w:90,h:16},
+     {x:1650,y:G-110,w:110,h:16},{x:1900,y:G-80,w:130,h:16},
+     {x:2150,y:G-130,w:90,h:16},{x:2450,y:G-100,w:120,h:16},
+     {x:2750,y:G-160,w:80,h:16},{x:3050,y:G-120,w:100,h:16},
+     {x:3350,y:G-90,w:140,h:16},{x:3650,y:G-150,w:90,h:16},
+     {x:3950,y:G-110,w:110,h:16},{x:4250,y:G-80,w:130,h:16},
+     {x:4550,y:G-130,w:90,h:16},{x:4850,y:G-160,w:80,h:16},
+     {x:5150,y:G-100,w:100,h:16},{x:5450,y:G-120,w:120,h:16}],
+    // ST2: 地下坑道（縦長・高低差大）
+    [{x:200,y:G-160,w:80,h:16},{x:380,y:G-240,w:70,h:16},
+     {x:560,y:G-180,w:90,h:16},{x:760,y:G-280,w:60,h:16},
+     {x:920,y:G-200,w:80,h:16},{x:1100,y:G-300,w:70,h:16},
+     {x:1280,y:G-220,w:90,h:16},{x:1480,y:G-320,w:60,h:16},
+     {x:1660,y:G-240,w:80,h:16},{x:1850,y:G-170,w:100,h:16},
+     {x:2060,y:G-260,w:70,h:16},{x:2260,y:G-340,w:60,h:16},
+     {x:2440,y:G-250,w:80,h:16},{x:2640,y:G-180,w:90,h:16},
+     {x:2860,y:G-280,w:70,h:16},{x:3080,y:G-360,w:60,h:16},
+     {x:3260,y:G-260,w:80,h:16},{x:3460,y:G-190,w:100,h:16},
+     {x:3680,y:G-300,w:70,h:16},{x:3900,y:G-220,w:80,h:16},
+     {x:4120,y:G-160,w:90,h:16},{x:4340,y:G-280,w:70,h:16},
+     {x:4560,y:G-200,w:80,h:16},{x:4780,y:G-320,w:60,h:16},
+     {x:4980,y:G-240,w:90,h:16},{x:5200,y:G-170,w:100,h:16},
+     {x:5420,y:G-280,w:70,h:16}],
+    // ST3: 釜地帯（クラスター状、一部孤立）
+    [{x:300,y:G-100,w:100,h:16},{x:300,y:G-190,w:100,h:16},
+     {x:550,y:G-140,w:80,h:16},{x:700,y:G-220,w:70,h:16},
+     {x:900,y:G-110,w:110,h:16},{x:900,y:G-220,w:60,h:16},
+     {x:1150,y:G-160,w:80,h:16},{x:1350,y:G-250,w:70,h:16},
+     {x:1550,y:G-120,w:100,h:16},{x:1550,y:G-240,w:60,h:16},
+     {x:1800,y:G-170,w:80,h:16},{x:2000,y:G-280,w:70,h:16},
+     {x:2200,y:G-130,w:110,h:16},{x:2450,y:G-230,w:80,h:16},
+     {x:2700,y:G-150,w:100,h:16},{x:2700,y:G-270,w:60,h:16},
+     {x:2950,y:G-190,w:80,h:16},{x:3150,y:G-300,w:70,h:16},
+     {x:3350,y:G-120,w:120,h:16},{x:3600,y:G-220,w:80,h:16},
+     {x:3850,y:G-160,w:90,h:16},{x:4100,y:G-260,w:70,h:16},
+     {x:4300,y:G-140,w:100,h:16},{x:4550,y:G-230,w:80,h:16},
+     {x:4800,y:G-170,w:90,h:16},{x:5050,y:G-280,w:70,h:16},
+     {x:5250,y:G-150,w:100,h:16},{x:5450,y:G-240,w:80,h:16}],
+    // ST4: 封印神殿（神殿の階段状）
+    [{x:200,y:G-80,w:160,h:16},{x:200,y:G-160,w:120,h:16},{x:200,y:G-240,w:80,h:16},
+     {x:600,y:G-100,w:140,h:16},{x:640,y:G-190,w:100,h:16},{x:680,y:G-280,w:60,h:16},
+     {x:1050,y:G-80,w:160,h:16},{x:1090,y:G-170,w:120,h:16},{x:1130,y:G-260,w:80,h:16},
+     {x:1500,y:G-110,w:140,h:16},{x:1540,y:G-210,w:100,h:16},{x:1580,y:G-310,w:60,h:16},
+     {x:1950,y:G-80,w:160,h:16},{x:1990,y:G-170,w:120,h:16},{x:2030,y:G-260,w:80,h:16},
+     {x:2400,y:G-120,w:140,h:16},{x:2440,y:G-220,w:100,h:16},{x:2480,y:G-320,w:60,h:16},
+     {x:2850,y:G-90,w:160,h:16},{x:2890,y:G-180,w:120,h:16},{x:2930,y:G-270,w:80,h:16},
+     {x:3300,y:G-110,w:140,h:16},{x:3340,y:G-210,w:100,h:16},{x:3380,y:G-310,w:60,h:16},
+     {x:3750,y:G-80,w:160,h:16},{x:3790,y:G-170,w:120,h:16},
+     {x:4200,y:G-120,w:140,h:16},{x:4240,y:G-230,w:100,h:16},
+     {x:4650,y:G-90,w:160,h:16},{x:4690,y:G-190,w:120,h:16},{x:4730,y:G-290,w:80,h:16},
+     {x:5100,y:G-120,w:140,h:16},{x:5400,y:G-80,w:120,h:16}],
+    // ST5: 深淵（不規則・難所）
+    [{x:150,y:G-200,w:60,h:16},{x:320,y:G-300,w:50,h:16},
+     {x:480,y:G-180,w:70,h:16},{x:640,y:G-340,w:50,h:16},
+     {x:800,y:G-240,w:60,h:16},{x:960,y:G-380,w:50,h:16},
+     {x:1120,y:G-200,w:70,h:16},{x:1280,y:G-320,w:50,h:16},
+     {x:1440,y:G-160,w:80,h:16},{x:1600,y:G-300,w:60,h:16},
+     {x:1760,y:G-400,w:50,h:16},{x:1920,y:G-220,w:70,h:16},
+     {x:2080,y:G-350,w:60,h:16},{x:2240,y:G-180,w:80,h:16},
+     {x:2400,y:G-320,w:50,h:16},{x:2560,y:G-420,w:50,h:16},
+     {x:2720,y:G-250,w:70,h:16},{x:2880,y:G-380,w:60,h:16},
+     {x:3040,y:G-200,w:80,h:16},{x:3200,y:G-340,w:50,h:16},
+     {x:3360,y:G-440,w:50,h:16},{x:3520,y:G-270,w:70,h:16},
+     {x:3680,y:G-180,w:80,h:16},{x:3840,y:G-360,w:60,h:16},
+     {x:4000,y:G-220,w:70,h:16},{x:4160,y:G-400,w:50,h:16},
+     {x:4320,y:G-160,w:80,h:16},{x:4480,y:G-320,w:60,h:16},
+     {x:4640,y:G-440,w:50,h:16},{x:4800,y:G-240,w:70,h:16},
+     {x:4960,y:G-360,w:60,h:16},{x:5120,y:G-200,w:80,h:16},
+     {x:5300,y:G-320,w:60,h:16},{x:5480,y:G-160,w:80,h:16}],
   ];
-  const idx=Math.min(currentStage-1,layouts.length-1);
-  (layouts[idx]||layouts[0]).forEach(p=>platforms.push(p));
-  // ゴール前の壁（ボスエリア区切り）
-  platforms.push({x:GOAL_X-10,y:0,w:20,h:H_-40,isBossWall:true});
+  (layouts[currentStage-1]||layouts[0]).forEach(p=>platforms.push(p));
+  platforms.push({x:GOAL_X-10,y:0,w:20,h:G,isBossWall:true});
 }
 
 function spawnTreasures(){
@@ -938,10 +1164,11 @@ function spawnTreasures(){
 
 function stageClear(){
   bgmStop();
+  if(currentStage===TOTAL_STAGES)motoUnlocked=true;
   state='stageclear';
   clearResultTimer=90;
   sfx('coin');
-  setSave({stage:currentStage+1,score,char:selChar,curseGauge});
+  setSave({stage:currentStage+1,score,char:selChar,curseGauge,motoUnlocked});
 }
 
 // ================================================================
@@ -1309,9 +1536,20 @@ function drawEnemies(){
     if(ex>W+60||ex+e.w<-60)continue;
     if(e.hitFlash>0&&Math.floor(frameTime/50)%2){ctx.globalAlpha=0.5;}
     switch(e.type){
-      case 'red_minion': drawRedMinion(ex,e.y,e.facing);break;
-      case 'blue_minion':drawBlueMinion(ex,e.y,e.facing);break;
-      case 'bat':        drawBat(ex,e.y,e.facing);break;
+      case 'red_minion':    drawRedMinion(ex,e.y,e.facing);break;
+      case 'blue_minion':   drawBlueMinion(ex,e.y,e.facing);break;
+      case 'bat':           drawBat(ex,e.y,e.facing);break;
+      case 'rock_beetle':   drawRockBeetle(ex,e.y,e.facing);break;
+      case 'earth_oni':     drawEarthOni(ex,e.y,e.facing);break;
+      case 'poison_spider': drawPoisonSpider(ex,e.y,e.facing);break;
+      case 'flame_oni':     drawFlameOni(ex,e.y,e.facing);break;
+      case 'lava_slime':    drawLavaSlime(ex,e.y,e.facing);break;
+      case 'seal_guard':    drawSealGuard(ex,e.y,e.facing);break;
+      case 'shadow_oni':    drawShadowOni(ex,e.y,e.facing);break;
+      case 'ghost':         drawGhost(ex,e.y,e.facing);break;
+      case 'abyss_spawn':   drawAbyssSpawn(ex,e.y,e.facing);break;
+      case 'corrupted_oni': drawCorruptedOni(ex,e.y,e.facing);break;
+      case 'eye_monster':   drawEyeMonster(ex,e.y,e.facing);break;
     }
     ctx.globalAlpha=1;
     // HPバー
@@ -1353,10 +1591,213 @@ function drawBat(x,y,f){
   R('#ff2200',-3,1,3,3);R('#ff2200',2,1,3,3);
   ctx.restore();
 }
+function drawRockBeetle(x,y,f){
+  ctx.save();ctx.translate(f>0?x:x+28,y);ctx.scale(f,1);
+  R('#4a3010',0,8,28,10);  // 甲羅
+  R('#6a5020',2,6,24,8);   // 甲羅ハイライト
+  R('#8a6820',4,3,20,6);   // 甲羅上
+  R('#cc8800',8,5,12,4);   // 甲羅紋様
+  R('#3a2008',0,16,10,4);  // 前足
+  R('#3a2008',18,16,10,4); // 後足
+  R(OL,5,9,4,3);R(OL,18,9,4,3); // 目
+  R('#ff2200',6,9,2,2);R('#ff2200',19,9,2,2);
+  ctx.restore();
+}
+function drawEarthOni(x,y,f){
+  ctx.save();ctx.translate(f>0?x:x+26,y);ctx.scale(f,1);
+  R('#4a6a30',2,6,22,20);  // 体
+  R('#3a5a20',3,4,20,8);   // 頭
+  R('#cc9900',8,-7,5,8);R('#cc9900',15,-7,5,8); // 角
+  R('#2a4a18',2,22,9,10);R('#2a4a18',15,22,9,10); // 足
+  R('#6a8a40',0,8,5,12);R('#6a8a40',21,8,5,12); // 腕
+  R(OL,7,5,4,3);R(OL,15,5,4,3); // 目
+  R('#ffcc00',8,5,2,2);R('#ffcc00',16,5,2,2);
+  ctx.restore();
+}
+function drawPoisonSpider(x,y,f){
+  ctx.save();ctx.translate(x+11,y+9);
+  R('#6a1a8a',-9,-4,18,14); // 腹
+  R('#8a20aa',-7,-2,14,8);  // 腹ハイライト
+  R('#4a0a6a',-3,-12,6,8);  // 頭
+  for(let i=0;i<4;i++){const lx=i<2?-15:7,ly=-2+i*3;R('#3a0a5a',lx,ly,6,2);}
+  R('#ff00aa',-3,-11,3,3);R('#ff00aa',1,-11,3,3); // 目
+  ctx.restore();
+}
+function drawFlameOni(x,y,f){
+  ctx.save();ctx.translate(f>0?x:x+26,y);ctx.scale(f,1);
+  R('#cc4400',2,6,22,20);  // 体
+  R('#aa2200',3,4,20,8);   // 頭
+  R('#ffaa00',8,-7,5,9);R('#ffaa00',15,-7,5,9); // 角
+  R('#882200',2,22,9,10);R('#882200',15,22,9,10); // 足
+  R('#ee5500',0,8,5,12);R('#ee5500',21,8,5,12); // 腕
+  R(OL,7,5,4,3);R(OL,15,5,4,3); // 目
+  R('#ffcc00',8,5,2,2);R('#ffcc00',16,5,2,2);
+  ctx.globalAlpha=0.25+Math.sin(frameTime/80)*.2;
+  R('#ff8800',2,-2,22,8); // 炎
+  ctx.globalAlpha=1;
+  ctx.restore();
+}
+function drawLavaSlime(x,y,f){
+  ctx.save();ctx.translate(x+10,y+10);
+  const b=Math.sin(frameTime/200)*.5;
+  ctx.fillStyle='#cc4400';ctx.beginPath();ctx.ellipse(0,b,10,8,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ff7700';ctx.beginPath();ctx.ellipse(-2,b-3,6,4,0,0,Math.PI*2);ctx.fill();
+  R(OL,-4,-4+b,3,3);R(OL,2,-4+b,3,3);
+  R('#ff2200',-3,-4+b,2,2);R('#ff2200',3,-4+b,2,2);
+  ctx.restore();
+}
+function drawSealGuard(x,y,f){
+  ctx.save();ctx.translate(f>0?x:x+28,y);ctx.scale(f,1);
+  R('#335599',0,10,10,26); // 盾
+  R('#4466bb',1,10,8,22);  // 盾面
+  R('#88aaff',1,10,8,3);   // 盾上端
+  R('#224488',2,20,6,2);   // 盾紋様
+  R('#3a3a6a',10,6,16,26); // 鎧体
+  R('#5a5a8a',11,6,14,6);  // 肩
+  R('#2a2a4a',10,28,7,12);R('#2a2a4a',19,28,7,12); // 足
+  R('#3a3a6a',10,0,16,10); // 兜
+  R('#8888cc',11,0,14,4);  // 兜ハイライト
+  R(SK,12,4,12,8);          // 顔
+  R(OL,14,6,3,3);R(OL,19,6,3,3); // 目
+  R('#ffcc00',14,6,2,2);R('#ffcc00',19,6,2,2);
+  ctx.restore();
+}
+function drawShadowOni(x,y,f){
+  ctx.save();ctx.translate(f>0?x:x+24,y);ctx.scale(f,1);
+  ctx.globalAlpha=0.75+Math.sin(frameTime/120)*.2;
+  R('#1a0a2a',2,6,20,20);  // 体
+  R('#2a0a3a',3,4,18,8);   // 頭
+  R('#550055',7,-5,4,8);R('#550055',14,-5,4,8); // 角
+  R('#0a0018',2,22,8,8);R('#0a0018',14,22,8,8); // 足
+  R('#cc00cc',7,5,4,4);R('#cc00cc',14,5,4,4);   // 目
+  R('#ff44ff',8,6,2,2);R('#ff44ff',15,6,2,2);
+  ctx.globalAlpha=1;
+  ctx.restore();
+}
+function drawGhost(x,y,f){
+  ctx.save();ctx.translate(x+10,y+13);
+  ctx.globalAlpha=0.55+Math.sin(frameTime/180)*.25;
+  ctx.fillStyle='#cce8ff';
+  ctx.beginPath();ctx.ellipse(0,-5,9,11,0,0,Math.PI*2);ctx.fill();
+  for(let i=-1;i<=1;i++){
+    ctx.beginPath();ctx.ellipse(i*7,6,3,5+Math.sin(frameTime/250+i)*.4,0,0,Math.PI*2);ctx.fill();
+  }
+  R('#4466cc',-4,-9,4,5);R('#4466cc',2,-9,4,5); // 目
+  R('#88aaff',-3,-9,2,3);R('#88aaff',3,-9,2,3);
+  ctx.globalAlpha=1;
+  ctx.restore();
+}
+function drawAbyssSpawn(x,y,f){
+  ctx.save();ctx.translate(f>0?x:x+18,y);ctx.scale(f,1);
+  R('#150a20',1,6,16,12); // 体
+  R('#220a35',2,4,14,8);  // 頭
+  R('#440088',5,-3,4,5);R('#440088',11,-3,4,5); // 突起
+  R('#2a1040',1,16,6,6);R('#2a1040',11,16,6,6); // 足
+  R('#aa00ff',5,5,3,3);R('#aa00ff',11,5,3,3);   // 目
+  R('#cc44ff',6,6,1,1);R('#cc44ff',12,6,1,1);
+  ctx.restore();
+}
+function drawCorruptedOni(x,y,f){
+  ctx.save();ctx.translate(f>0?x:x+32,y);ctx.scale(f,1);
+  R('#3a1a2a',3,8,26,24); // 体
+  R('#2a0a1a',4,6,24,10); // 頭
+  R('#880044',10,-8,6,10);R('#880044',18,-8,6,10); // 角
+  R('#1a0510',3,28,11,10);R('#1a0510',18,28,11,10); // 足
+  R('#440022',0,10,6,14);R('#440022',26,10,6,14); // 腕
+  R('#ff0044',10,6,5,4);R('#ff0044',18,6,5,4); // 目
+  ctx.globalAlpha=0.35+Math.sin(frameTime/120)*.2;
+  R('#880088',8,14,16,4); // 呪紋
+  ctx.globalAlpha=1;
+  ctx.restore();
+}
+function drawEyeMonster(x,y,f){
+  ctx.save();ctx.translate(x+11,y+11);
+  R('#1a1a3a',-10,-10,20,20); // 体
+  R('#0a0a2a',-8,-8,16,12);
+  ctx.fillStyle='#220022';ctx.beginPath();ctx.ellipse(0,-2,8,8,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#cc00cc';ctx.beginPath();ctx.ellipse(0,-2,5,5,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ff44ff';ctx.beginPath();ctx.ellipse(-2,-4,2,2,0,0,Math.PI*2);ctx.fill();
+  for(let i=0;i<4;i++){
+    const a=frameTime/350+i*Math.PI/2;
+    R('#110a22',Math.cos(a)*9-2,Math.sin(a)*7+6,4,4);
+  }
+  ctx.restore();
+}
 
 // ================================================================
-//  ボス描画
+//  ボス描画ヘルパー（ctx.translate(cx,by)/scale(facing,1)の中で使う）
 // ================================================================
+function drawBossRedOni(){
+  R('#cc1100',5,10,50,60);// 体
+  R('#cc1100',10,0,40,18);// 頭
+  R('#ffdd00',16,-12,10,16);// 角左
+  R('#ffdd00',34,-12,10,16);// 角右
+  R('#ff4400',12,4,36,10);// 帯
+  R('#8b0000',5,60,16,12);// 足左
+  R('#8b0000',39,60,16,12);// 足右
+  R(OL,14,6,8,8);R(OL,38,6,8,8);
+  R('#ffdd00',14,6,8,8);R('#ffdd00',38,6,8,8);
+  R(OL,16,8,4,4);R(OL,40,8,4,4);
+  R('#cc1100',5,14,6,30);R('#cc1100',49,14,6,30);
+  R('#cc8800',52,8,10,55);
+  for(let i=0;i<6;i++)R('#ffcc00',50,10+i*9,14,6);
+}
+function drawBossRockWorm(){
+  R('#4a3010',0,20,60,55);  // 胴体影
+  R('#6a4a20',5,28,50,46);  // 胴体
+  R('#8a6a30',5,10,50,24);  // 頭
+  R('#cc9900',12,0,8,14);R('#cc9900',40,0,8,14); // 牙
+  R(OL,13,12,10,10);R(OL,38,12,10,10); // 目
+  R('#ff4400',15,13,6,6);R('#ff4400',40,13,6,6);
+  for(let i=0;i<4;i++)R('#5a3a18',3,34+i*11,54,9); // セグメント
+}
+function drawBossCauldronOni(){
+  R('#882200',5,8,50,60);   // 体
+  R('#660000',10,0,40,16);  // 頭
+  R('#ffaa00',12,-12,8,14);R('#ffaa00',40,-12,8,14); // 角
+  R(OL,14,4,8,8);R(OL,38,4,8,8); // 目
+  R('#ff8800',15,5,6,6);R('#ff8800',39,5,6,6);
+  R('#440000',5,60,18,14);R('#440000',37,60,18,14); // 足
+  R('#444',-5,56,70,16); // 釜外
+  R('#cc4400',-3,58,66,10); // 中身
+  ctx.globalAlpha=0.5+Math.sin(frameTime/100)*.3;
+  R('#ff8800',0,58,60,4);
+  ctx.globalAlpha=1;
+}
+function drawBossSealGuardBoss(){
+  R('#2a2a6a',8,8,44,60);   // 鎧体
+  R('#4a4a8a',10,8,40,10);  // 胸鎧
+  R('#3a3a7a',8,0,44,14);   // 兜
+  R('#aaaaff',9,0,42,5);    // 兜ハイライト
+  R(SK,16,5,26,9);           // 顔
+  R(OL,18,6,6,5);R(OL,36,6,6,5); // 目
+  R('#ffcc00',19,7,4,3);R('#ffcc00',37,7,4,3);
+  R('#335599',-12,12,18,40); // 大盾
+  R('#4466bb',-11,12,16,36);
+  R('#88aaff',-11,12,16,4);
+  R('#cc8800',-8,26,10,6);  // 盾紋様
+  R('#2a2a4a',8,60,20,14);R('#2a2a4a',32,60,20,14); // 足
+}
+function drawBossRankkai(){
+  const p2=boss.phase===2;
+  R('#2a0a3a',3,4,54,68);   // 体
+  R('#1a0520',5,0,50,18);   // 頭
+  R('#880088',8,-14,10,18);R('#880088',42,-14,10,18); // 角
+  R(p2?'#ff00ff':'#cc00cc',9,-18,6,8);R(p2?'#ff00ff':'#cc00cc',45,-18,6,8);
+  R('#1a0528',-10,10,16,32); // 左腕
+  R('#1a0528',54,10,16,32);  // 右腕
+  R('#550055',-12,36,18,12); // 左拳
+  R('#550055',54,36,18,12);  // 右拳
+  R('#1a0520',5,60,22,16);R('#1a0520',33,60,22,16); // 足
+  R(OL,15,4,12,10);R(OL,33,4,12,10); // 目
+  R('#ff00ff',17,6,8,7);R('#ff00ff',35,6,8,7);
+  R('#ffffff',18,6,4,4);R('#ffffff',36,6,4,4);
+  if(p2){R('#440044',27,2,6,6);R('#ff44ff',28,3,4,4);}
+  ctx.globalAlpha=0.2+Math.sin(frameTime/80)*.15;
+  R('#880088',2,10,56,50);
+  ctx.globalAlpha=1;
+}
+
 function drawBoss(){
   if(!boss)return;
   const bx=boss.x-cam.x,by=boss.y;
@@ -1365,24 +1806,16 @@ function drawBoss(){
   ctx.save();
   const cx=boss.facing>0?bx:bx+boss.w;
   ctx.translate(cx,by);ctx.scale(boss.facing,1);
-
-  // 赤鬼門番
-  R('#cc1100',5,10,50,60);// 体
-  R('#cc1100',10,0,40,18);// 頭
-  R('#ffdd00',16,-12,10,16);// 角左
-  R('#ffdd00',34,-12,10,16);// 角右
-  R('#ff4400',12,4,36,10);// 帯
-  R('#8b0000',5,60,16,12);// 足左
-  R('#8b0000',39,60,16,12);// 足右
-  R(OL,14,6,8,8);R(OL,38,6,8,8);// 目（大）
-  R('#ffdd00',14,6,8,8);R('#ffdd00',38,6,8,8);
-  R(OL,16,8,4,4);R(OL,40,8,4,4);// 瞳
-  R('#cc1100',5,14,6,30);// 腕左
-  R('#cc1100',49,14,6,30);// 腕右
-  // 金棒
-  R('#cc8800',52,8,10,55);
-  for(let i=0;i<6;i++)R('#ffcc00',50,10+i*9,14,6);
-
+  if(!boss.hidden){
+    switch(boss.type){
+      case 'red_oni':      drawBossRedOni();break;
+      case 'rock_worm':    drawBossRockWorm();break;
+      case 'cauldron_oni': drawBossCauldronOni();break;
+      case 'seal_guard':   drawBossSealGuardBoss();break;
+      case 'rankkai':      drawBossRankkai();break;
+      default:             drawBossRedOni();break;
+    }
+  }
   ctx.restore();
   ctx.globalAlpha=1;
 
@@ -1450,6 +1883,24 @@ function drawTreasures(){
 }
 
 // ================================================================
+//  武器オーブ描画
+// ================================================================
+function drawWeaponOrbs(){
+  for(const o of weaponOrbs){
+    const ox=o.x-cam.x;
+    if(ox<-30||ox>W+30)continue;
+    o.bob=(o.bob||0)+0.05;
+    const bob=Math.sin(o.bob)*3;
+    ctx.globalAlpha=0.85+Math.sin(o.bob*2)*.1;
+    ctx.fillStyle='#6600cc';ctx.beginPath();ctx.arc(ox+8,o.y+8+bob,8,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#cc44ff';ctx.beginPath();ctx.arc(ox+6,o.y+5+bob,4,0,Math.PI*2);ctx.fill();
+    ctx.globalAlpha=1;
+    ctx.fillStyle='#ffaaff';ctx.font=`bold ${Math.min(W*.02,10)}px monospace`;ctx.textAlign='center';
+    ctx.fillText('W',ox+8,o.y+12+bob);
+  }
+}
+
+// ================================================================
 //  HUD
 // ================================================================
 function drawHUD(){
@@ -1488,6 +1939,11 @@ function drawHUD(){
     dr(8,H-hh-42,dw,dh,'#223344');dr(8,H-hh-42,dw*dp,dh,'#4499ff');
     ctx.fillStyle='#6699cc';ctx.font='bold 9px monospace';ctx.textAlign='left';
     ctx.fillText('DASH',10,H-hh-46);
+  }
+  // 武器レベル
+  if(player.weaponLv>0){
+    ctx.fillStyle='#cc44ff';ctx.font=`bold ${Math.min(W*.022,11)}px monospace`;ctx.textAlign='left';
+    ctx.fillText(`WPN Lv.${player.weaponLv}`,10,H-hh-58);
   }
 
   // ボスバナー
@@ -1828,6 +2284,7 @@ function draw(){
     drawBackground();
     drawPlatforms();
     drawTreasures();
+    drawWeaponOrbs();
     drawParticles();
     drawProjectiles();
     drawEnemies();
