@@ -1226,21 +1226,21 @@ function drawBackground(){
         ctx.beginPath();ctx.moveTo(mx,H-40);ctx.lineTo(mx+w/2,H-40-h);ctx.lineTo(mx+w,H-40);ctx.fill();
       });
     });
-    // 雲（奥・薄い）
-    ctx.fillStyle='rgba(255,255,255,0.45)';
-    [[70,H*.12,55,14],[240,H*.2,75,18],[440,H*.09,50,12],[630,H*.17,85,20]].forEach(([x,y,rx,ry])=>{
-      const cx=(x-cam.x*.03+W*5)%W;
-      ctx.beginPath();ctx.ellipse(cx,y,rx,ry,0,0,Math.PI*2);ctx.fill();
-    });
-    // 雲（手前・くっきり）
-    [[110,H*.22,90,24],[360,H*.15,120,30],[620,H*.24,95,26]].forEach(([x,y,rx,ry])=>{
-      const cx=(x-cam.x*.07+W*5)%W;
-      ctx.globalAlpha=0.9;ctx.fillStyle='#fff';
-      ctx.beginPath();ctx.ellipse(cx,y,rx,ry,0,0,Math.PI*2);ctx.fill();
-      ctx.fillStyle='rgba(180,210,240,0.4)';
-      ctx.beginPath();ctx.ellipse(cx,y+10,rx*.9,ry*.55,0,0,Math.PI*2);ctx.fill();
-    });
-    ctx.globalAlpha=1;
+    // 雲（複数の円を重ねてリアルな雲形に）
+    const drawCloud=(cx,cy,s,a=1)=>{
+      ctx.globalAlpha=a;ctx.fillStyle='#fff';
+      [[0,0,s],[s*.6,s*.1,s*.7],[s*1.1,0,s*.8],[s*.3,-s*.3,s*.6],[s*.8,-s*.25,s*.55]].forEach(([dx,dy,r])=>{
+        ctx.beginPath();ctx.arc(cx+dx,cy+dy,r,0,Math.PI*2);ctx.fill();
+      });
+      ctx.fillStyle='rgba(180,210,240,0.35)';
+      ctx.beginPath();ctx.arc(cx+s*.3,cy+s*.1,s*.9,0,Math.PI*2);ctx.fill();
+      ctx.globalAlpha=1;
+    };
+    drawCloud((100-cam.x*.03+W*4)%W, H*.18, 18, 0.85);
+    drawCloud((280-cam.x*.03+W*4)%W, H*.12, 22, 0.9);
+    drawCloud((500-cam.x*.03+W*4)%W, H*.2, 16, 0.8);
+    drawCloud((720-cam.x*.06+W*4)%W, H*.14, 25, 0.9);
+    drawCloud((950-cam.x*.06+W*4)%W, H*.18, 20, 0.85);
 
   }else if(tod==='noon'){
     // 坑道：左右に岩壁
@@ -1365,25 +1365,25 @@ function drawPlatforms(){
     const px=p.x-cam.x;
     if(px>W+60||px+p.w<-60)continue;
     // 落ち影
-    ctx.globalAlpha=0.28;ctx.fillStyle='#000';
-    ctx.fillRect(Math.round(px+3),Math.round(p.y+p.h),Math.round(p.w),5);
+    ctx.globalAlpha=0.35;ctx.fillStyle='#000';
+    ctx.fillRect(Math.round(px+4),Math.round(p.y+p.h),Math.round(p.w),6);
     ctx.globalAlpha=1;
     // 本体（角丸）
-    RR(cfg.groundCol,px,p.y,p.w,p.h,4);
-    // 上面
-    RR(cfg.stoneCol,px,p.y,p.w,7,4);
-    // 上面ハイライト
-    ctx.globalAlpha=0.3;ctx.fillStyle='#fff';
-    ctx.fillRect(Math.round(px+3),Math.round(p.y+1),Math.round(p.w-6),2);
+    RR(cfg.groundCol,px,p.y,p.w,p.h,3);
+    // 上面アクセント（月の裏側スタイル：明るいライン）
+    RR(cfg.stoneCol,px,p.y,p.w,8,3);
+    // 上面の輝きライン
+    ctx.globalAlpha=0.6;ctx.fillStyle='rgba(255,255,255,0.8)';
+    ctx.fillRect(Math.round(px+2),Math.round(p.y+1),Math.round(p.w-4),2);
     ctx.globalAlpha=1;
     // 左縁光
-    ctx.globalAlpha=0.18;ctx.fillStyle='#fff';ctx.fillRect(Math.round(px),Math.round(p.y+7),3,Math.round(p.h-8));ctx.globalAlpha=1;
+    ctx.globalAlpha=0.2;ctx.fillStyle='#fff';ctx.fillRect(Math.round(px),Math.round(p.y+8),3,Math.round(p.h-9));ctx.globalAlpha=1;
     // 右縁影
-    ctx.globalAlpha=0.15;ctx.fillStyle='#000';ctx.fillRect(Math.round(px+p.w-3),Math.round(p.y+7),3,Math.round(p.h-7));ctx.globalAlpha=1;
-    // テクスチャ線
-    if(p.w>50){
-      ctx.globalAlpha=0.1;ctx.fillStyle='#000';
-      for(let tx=px+28;tx<px+p.w-14;tx+=28)ctx.fillRect(Math.round(tx),Math.round(p.y+7),2,Math.round(p.h-9));
+    ctx.globalAlpha=0.2;ctx.fillStyle='#000';ctx.fillRect(Math.round(px+p.w-3),Math.round(p.y+8),3,Math.round(p.h-8));ctx.globalAlpha=1;
+    // テクスチャ（ブロック区切り）
+    if(p.w>40){
+      ctx.globalAlpha=0.15;ctx.fillStyle='#000';
+      for(let tx=px+24;tx<px+p.w-12;tx+=24)ctx.fillRect(Math.round(tx),Math.round(p.y+8),2,Math.round(p.h-10));
       ctx.globalAlpha=1;
     }
   }
@@ -1392,7 +1392,7 @@ function drawPlatforms(){
 // ================================================================
 //  キャラクター描画
 // ================================================================
-const VS=1.6; // 視覚スケール（当たり判定より大きく描く）
+const VS=0.95; // 視覚スケール（月の裏側と同程度）
 let _wf=0,_atk=0,_air=false,_combo=0; // アニメ状態グローバル
 function drawCharAt(ci){
   switch(ci){
@@ -1416,13 +1416,14 @@ function drawPlayer(){
   _air=!player.onGround;
   _combo=player.comboStep;
   const moving=Math.abs(player.vx)>0.5&&player.onGround;
-  const lean=moving?-0.09:0; // 前傾
-  const bob=moving?Math.sin(player.walkFrame/6)*1.2:0; // 上下ボブ
+  const bob=moving?Math.sin(player.walkFrame/6)*0.8:0;
   ctx.translate(f>0?px:px+cw, py+ch+bob);
   ctx.scale(f*VS, VS);
   ctx.translate(0, -ch);
-  if(lean)ctx.transform(1,0,lean,1,0,0);
+  ctx.transform(1,0,-0.10,1,0,0); // 常に前傾（横スクロール感）
+  ctx.shadowBlur=5;ctx.shadowColor='rgba(0,0,0,0.95)'; // 黒縁で背景から浮かせる
   drawCharAt(ci);
+  ctx.shadowBlur=0;
   ctx.restore();
 
   // ダッシュエフェクト
@@ -1509,16 +1510,22 @@ function drawJubei(){
   ctx.fillStyle='#241000';ctx.beginPath();ctx.ellipse(14,-4,4,6,0,0,Math.PI*2);ctx.fill();
   ctx.fillStyle='#341800';ctx.beginPath();ctx.ellipse(13,-5,2,3,0,0,Math.PI*2);ctx.fill();
   RR('#cc2200',11,-1,6,3,1);
-  // ===== 目（大きく・マリオ風）=====
+  // ===== 目（3/4横向き：前目大・後目小）=====
   const ey=_atk?3:4;
-  R(OL,5,ey,9,8);R('#fffcf0',6,ey+1,7,7);
-  ctx.fillStyle='#1a44ee';ctx.beginPath();ctx.ellipse(9.5,ey+5,3.5,3.5,0,0,Math.PI*2);ctx.fill();
-  R(OL,8,ey+4,3,3);R('#fff',8,ey+4,2,1);
-  R(OL,14,ey,9,8);R('#fffcf0',15,ey+1,7,7);
-  ctx.fillStyle='#1a44ee';ctx.beginPath();ctx.ellipse(18.5,ey+5,3.5,3.5,0,0,Math.PI*2);ctx.fill();
-  R(OL,17,ey+4,3,3);R('#fff',17,ey+4,2,1);
-  if(_atk){R(OL,4,ey-2,10,4);R(OL,15,ey-2,10,4);}else{R(OL,5,ey-1,9,3);R(OL,15,ey-1,9,3);}
-  if(_atk){R(OL,7,13,14,6);R('#f8c080',8,14,12,4);}else{R('#cc5050',7,13,14,3);R('#ff8888',8,13,12,1);}
+  // 後ろ目（小・奥に見える）
+  R(OL,7,ey+1,6,6);R('#fffcf0',8,ey+2,4,5);
+  ctx.fillStyle='#1a44ee';ctx.beginPath();ctx.ellipse(10,ey+5,2,2,0,0,Math.PI*2);ctx.fill();
+  R('#fff',10,ey+4,1,1);
+  // 前目（大・メイン）
+  R(OL,15,ey,8,8);R('#fffcf0',16,ey+1,6,7);
+  ctx.fillStyle='#1a44ee';ctx.beginPath();ctx.ellipse(19,ey+5,3,3,0,0,Math.PI*2);ctx.fill();
+  R(OL,18,ey+4,2,2);R('#fff',18,ey+4,1,1);
+  // 鼻（横顔）
+  R('#c07838',21,10,2,3);
+  // 眉
+  if(_atk){R(OL,7,ey,6,3);R(OL,15,ey-2,9,4);}else{R(OL,8,ey-1,5,2);R(OL,15,ey-1,8,2);}
+  // 口
+  if(_atk){R(OL,9,13,12,5);R('#f8c080',10,14,10,3);}else{R('#cc5050',9,13,10,2);}
 }
 
 function drawKarasu(){
@@ -1681,13 +1688,15 @@ function drawMataki(){
   // 口ひげ（鼻の下）
   R(OL,9,10,5,2);R(OL,18,10,5,2);
 
-  // ===== 目（鋭い・太眉）=====
+  // ===== 目（3/4横向き・鋭い）=====
   const ey=_atk?4:5;
-  R(OL,5,ey,10,8);R('#f0e0c0',6,ey+1,8,7);
-  ctx.fillStyle='#181818';ctx.beginPath();ctx.ellipse(10,ey+5,3.5,3.5,0,0,Math.PI*2);ctx.fill();
-  R('#fff',9,ey+4,2,1);
-  R(OL,17,ey,10,8);R('#f0e0c0',17,ey+1,8,7);
-  ctx.fillStyle='#181818';ctx.beginPath();ctx.ellipse(21,ey+5,3.5,3.5,0,0,Math.PI*2);ctx.fill();
+  // 後ろ目（小）
+  R(OL,6,ey,8,7);R('#f0e0c0',7,ey+1,6,6);
+  ctx.fillStyle='#181818';ctx.beginPath();ctx.ellipse(10,ey+4,2.5,2.5,0,0,Math.PI*2);ctx.fill();
+  R('#fff',9,ey+3,1,1);
+  // 前目（大）
+  R(OL,18,ey,10,8);R('#f0e0c0',19,ey+1,8,7);
+  ctx.fillStyle='#181818';ctx.beginPath();ctx.ellipse(23,ey+5,3.5,3.5,0,0,Math.PI*2);ctx.fill();
   R('#fff',20,ey+4,2,1);
   if(_atk){R(OL,4,ey-2,13,5);R(OL,16,ey-2,13,5);}else{R(OL,4,ey-1,13,4);R(OL,16,ey-1,13,4);}
   if(_atk){R(OL,8,14,16,7);R('#f8c080',9,15,14,5);}else{R('#aa2a10',7,14,18,4);R('#cc4020',8,14,16,2);}
@@ -1750,14 +1759,16 @@ function drawMomotaro(){
   // 髷
   RR(OL,8,0,12,6,3);R('#180a02',9,1,10,5);R('#2a1004',10,1,8,3);R('#0a0402',13,1,4,8);
   R('#140802',5,1,4,8);R('#140802',19,1,4,8);
-  // 目
+  // 目（3/4横向き）
   const ey=_atk?4:5;
-  R(OL,7,ey,7,5);R('#f8f0e0',8,ey+1,5,4);
-  ctx.fillStyle='#1840a8';ctx.beginPath();ctx.ellipse(10.5,ey+3,2.5,2.5,0,0,Math.PI*2);ctx.fill();
-  R(OL,10,ey+2,2,2);R('#fff',10,ey+2,1,1);
-  R(OL,16,ey,7,5);R('#f8f0e0',16,ey+1,5,4);
-  ctx.fillStyle='#1840a8';ctx.beginPath();ctx.ellipse(18.5,ey+3,2.5,2.5,0,0,Math.PI*2);ctx.fill();
-  R(OL,18,ey+2,2,2);R('#fff',18,ey+2,1,1);
+  // 後ろ目（小）
+  R(OL,7,ey,6,5);R('#f8f0e0',8,ey+1,4,4);
+  ctx.fillStyle='#1840a8';ctx.beginPath();ctx.ellipse(10,ey+3,2,2,0,0,Math.PI*2);ctx.fill();
+  R('#fff',10,ey+2,1,1);
+  // 前目（大）
+  R(OL,15,ey,8,6);R('#f8f0e0',16,ey+1,6,5);
+  ctx.fillStyle='#1840a8';ctx.beginPath();ctx.ellipse(19,ey+4,3,3,0,0,Math.PI*2);ctx.fill();
+  R(OL,18,ey+3,2,2);R('#fff',18,ey+3,1,1);
   if(_atk){R('#1a1a1a',7,ey-1,6,3);R('#1a1a1a',17,ey-1,6,3);}else{R(OL,6,4,8,2);R(OL,16,4,8,2);}
   if(_atk){R(OL,9,11,9,4);R('#f8b070',10,12,7,2);}else{R('#c05050',10,11,7,2);R('#d06060',12,10,5,1);}
 }
