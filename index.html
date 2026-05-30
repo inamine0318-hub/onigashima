@@ -1422,66 +1422,94 @@ function drawKarasu(){
   const wf=Math.floor(_wf/9)%2,la=wf?3:-3,ra=wf?-3:3;
   const ext=_atk===1?7:_atk===2?14:_atk>=3?22:0;
   const bk=_atk>0?3:0,air=_air;
-  // 弓
+  // 弓（背面・待機時）
   if(!_atk){
-    R(OL,19,2,5,32);R('#8a6212',20,3,3,30);R('#c89c1a',20,2,3,5);R('#c89c1a',20,29,3,5);R('#a07c14',21,6,2,22);R('#ccaa33',19,9,1,18);
+    R(OL,18,2,4,32);R('#7a5010',19,3,2,30);
+    R('#b07820',18,2,4,5);R('#b07820',18,29,4,5);
+    R('#7a6000',17,10,1,14);
   }
-  // 脚（角丸）
+  // ===== 脚（黒い足袋＋藁草履）=====
   const lya=air?-5:0,lyb=air?3:0;
-  RR(OL,2+la,24+lya,8,14,3);RR('#0c0c1a',3+la,25+lya,6,12,2);RR('#1c1c2e',3+la,25+lya,6,4,2);R('#040408',3+la,34+lya,6,4);
-  RR(OL,13+ra,24+lyb,8,14,3);RR('#0c0c1a',14+ra,25+lyb,6,12,2);RR('#1c1c2e',14+ra,25+lyb,6,4,2);R('#040408',14+ra,34+lyb,6,4);
-  // 腰紐
-  RR(OL,1,24,22,5,2);RR('#441408',2,25,20,3,2);
-  // 外套（roundRect）
-  RR(OL,0,12,24,15,5);RR('#0e0e1e',1,13,22,13,4);RR('#1c1c30',1,13,22,5,4);R('#060610',1,22,22,4);
-  // 外套裾（翻る形状）
-  RR(OL,-2,26,13,8,4);RR('#0c0c1a',-1,27,11,6,3);RR('#181828',-1,27,8,3,3);
-  RR(OL,13,26,13,8,4);RR('#0c0c1a',14,27,11,6,3);RR('#181828',14,27,8,3,3);
-  // 丸い肩（arc）
+  cap(OL,2+la,25+lya,9,14);cap('#1a1a22',3+la,26+lya,7,12);cap('#2c2c38',3+la,26+lya,7,4);
+  cap(OL,13+ra,25+lyb,9,14);cap('#1a1a22',14+ra,26+lyb,7,12);cap('#2c2c38',14+ra,26+lyb,7,4);
+  // 藁草履（左右）
+  RR(OL,1+la,37+lya,12,4,2);RR('#d4a820',2+la,38+lya,10,3,2);R('#8a6c10',5+la,38+lya,4,2);
+  RR(OL,12+ra,37+lyb,12,4,2);RR('#d4a820',13+ra,38+lyb,10,3,2);R('#8a6c10',16+ra,38+lyb,4,2);
+
+  // ===== 黒い羽織（長い・カラス羽イメージ）=====
+  RR(OL,0,12,24,18,5);RR('#0e0e1c',1,13,22,16,4);RR('#1c1c2e',1,13,22,6,4);R('#06060e',1,25,22,5);
+  // 白えり
+  RR('#f0f0e4',8,12,8,10,3);R('#e0e0d0',9,13,6,8);
+  // 羽織の裾（カラス羽を意識した鋭い裾）
+  ctx.fillStyle='#0e0e1c';
+  ctx.beginPath();ctx.moveTo(0,28);ctx.lineTo(-2,34);ctx.lineTo(3,30);ctx.lineTo(6,36);
+  ctx.lineTo(10,30);ctx.lineTo(13,35);ctx.lineTo(17,30);ctx.lineTo(20,36);
+  ctx.lineTo(24,30);ctx.lineTo(26,34);ctx.lineTo(24,28);ctx.closePath();ctx.fill();
+  // 羽光沢（青みがかった光）
+  ctx.globalAlpha=0.2;R('#4444cc',1,13,22,10);ctx.globalAlpha=1;
+
+  // ===== 肩（arc）=====
   ctx.fillStyle=OL;ctx.beginPath();ctx.arc(2,14,7,Math.PI*.35,Math.PI*1.65);ctx.fill();
-  ctx.fillStyle='#141420';ctx.beginPath();ctx.arc(2,14,5,Math.PI*.35,Math.PI*1.65);ctx.fill();
+  ctx.fillStyle='#181826';ctx.beginPath();ctx.arc(2,14,5,Math.PI*.35,Math.PI*1.65);ctx.fill();
   ctx.fillStyle=OL;ctx.beginPath();ctx.arc(22,14,7,Math.PI*1.35,Math.PI*.65);ctx.fill();
-  ctx.fillStyle='#141420';ctx.beginPath();ctx.arc(22,14,5,Math.PI*1.35,Math.PI*.65);ctx.fill();
-  // 後腕（カプセル）
-  cap(OL,-bk-1,14,6,13);cap('#0a0a18',-bk,15,4,11);cap('#161628',-bk,15,4,5);
-  // 前腕（弓、攻撃：ext伸び）
+  ctx.fillStyle='#181826';ctx.beginPath();ctx.arc(22,14,5,Math.PI*1.35,Math.PI*.65);ctx.fill();
+
+  // ===== 腕 =====
+  cap(OL,-bk-1,14,6,13);cap('#0e0e1c',-bk,15,4,11);cap('#1c1c2c',-bk,15,4,5);
   if(_atk>0){
     const eA=Math.floor(ext*.2),eB=Math.floor(ext*.4);
-    R(OL,-1,4,5,30);R('#8a6212',0,5,3,28);R('#c89c1a',0,4,3,5);R('#c89c1a',0,29,3,5);
-    R('#ccaa33',-1,9,14,1);R('#ccaa22',0,9,8,2);
-    cap(OL,2,13,5+eA,10);cap('#0a0a18',3,14,3+eA,8);
-    cap(OL,4+eB,11,5+eA,11);cap('#0a0a18',5+eB,12,3+eA,9);
-    RR('#b07a00',16-bk,17,6,5,2);
+    cap(OL,0,12,6,12);cap('#0e0e1c',1,13,4,10);
+    R(OL,-2,3,5,30);R('#7a5010',-1,4,3,28);R('#b07820',-1,3,3,5);R('#b07820',-1,28,3,5);
+    R('#7a6000',-2,8,14,1);R('#cc9800',0,8,8,2);
+    cap(OL,17-bk,14,6,10);cap('#d4a820',18-bk,15,4,8);
   }else{
     const sw=_wf>0?(wf===0?1:-1):0;
-    cap(OL,16+sw,14,5,11);cap('#0a0a18',17+sw,15,3,9);
-    RR('#b07a00',17+sw,21,5,5,2);
+    cap(OL,16+sw,14,6,12);cap('#0e0e1c',17+sw,15,4,10);
+    RR('#d4a820',17+sw,22,5,5,2);
   }
-  // 頭巾（roundRect）
-  RR(OL,2,0,20,17,5);RR('#08080e',3,1,18,16,4);RR('#16162a',3,1,18,5,4);R('#04040a',3,12,18,5);
-  R('#0e0c1c',2,4,3,11);R('#0e0c1c',19,4,3,11);
-  // 面・顔（ellipse）
-  ctx.fillStyle=OL;ctx.beginPath();ctx.ellipse(12,9,9,7,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#d8944e';ctx.beginPath();ctx.ellipse(12,9,8,6,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#eaa862';ctx.beginPath();ctx.ellipse(12,7,8,3,0,Math.PI,0);ctx.fill();
-  // くちばし（三角形）
-  ctx.fillStyle=OL;ctx.beginPath();ctx.moveTo(5,10);ctx.lineTo(4,17);ctx.lineTo(19,17);ctx.lineTo(19,10);ctx.closePath();ctx.fill();
-  ctx.fillStyle='#c87a00';ctx.beginPath();ctx.moveTo(6,11);ctx.lineTo(5,16);ctx.lineTo(18,16);ctx.lineTo(18,11);ctx.closePath();ctx.fill();
-  ctx.fillStyle='#f09a00';ctx.fillRect(6,11,12,2);
-  ctx.fillStyle=OL;ctx.beginPath();ctx.moveTo(10,7);ctx.lineTo(8,11);ctx.lineTo(14,11);ctx.closePath();ctx.fill();
-  ctx.fillStyle='#e08800';ctx.beginPath();ctx.moveTo(10,8);ctx.lineTo(9,11);ctx.lineTo(13,11);ctx.closePath();ctx.fill();
-  // 目（赤い輝き）
-  const eg=_atk?'#ff8800':'#ff5500';
-  ctx.fillStyle=OL;ctx.beginPath();ctx.ellipse(8,6,4,4,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#ff0000';ctx.beginPath();ctx.ellipse(8,6,3,3,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle=eg;ctx.beginPath();ctx.ellipse(8,6,2,2,0,0,Math.PI*2);ctx.fill();
-  R('#ffcc44',7,5,2,1);
-  ctx.fillStyle=OL;ctx.beginPath();ctx.ellipse(16,6,4,4,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#ff0000';ctx.beginPath();ctx.ellipse(16,6,3,3,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle=eg;ctx.beginPath();ctx.ellipse(16,6,2,2,0,0,Math.PI*2);ctx.fill();
-  R('#ffcc44',15,5,2,1);
-  R('#660000',4,3,7,2);R('#660000',14,3,7,2);
-  if(_wf>0){const ca=Math.sin(_wf/6)*.12;ctx.globalAlpha=Math.abs(ca)+.04;RR('#1a1a30',-5,24,5,10,3);RR('#1a1a30',24,24,5,10,3);ctx.globalAlpha=1;}
+
+  // ===== 首 =====
+  cap(OL,9,10,6,4);cap('#e8c840',10,11,4,3);
+
+  // ===== 黄色いマスク（楕円の顔を覆う）=====
+  ctx.fillStyle=OL;ctx.beginPath();ctx.ellipse(12,6,10,9,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#e8cc00';ctx.beginPath();ctx.ellipse(12,6,9,8,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ffee44';ctx.beginPath();ctx.ellipse(12,3,9,5,0,Math.PI,0);ctx.fill();
+  ctx.fillStyle='#b89a00';ctx.beginPath();ctx.ellipse(12,10,9,4,0,0,Math.PI);ctx.fill();
+  // カラスの嘴を思わせる黄いアクセント（下部）
+  ctx.fillStyle=OL;ctx.beginPath();ctx.moveTo(6,10);ctx.lineTo(5,15);ctx.lineTo(19,15);ctx.lineTo(18,10);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#cc9c00';ctx.beginPath();ctx.moveTo(7,11);ctx.lineTo(6,14);ctx.lineTo(18,14);ctx.lineTo(17,11);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#ffcc00';ctx.fillRect(7,11,10,2);
+  // 目の穴（赤い瞳）
+  const eg=_atk?'#ff6600':'#ff2200';
+  R(OL,5,2,6,7);R('#0a0008',6,3,4,6);
+  ctx.fillStyle=eg;ctx.beginPath();ctx.ellipse(8,6,2.5,2.5,0,0,Math.PI*2);ctx.fill();
+  R('#ffaa00',7,5,2,1);
+  R(OL,14,2,6,7);R('#0a0008',14,3,4,6);
+  ctx.fillStyle=eg;ctx.beginPath();ctx.ellipse(16,6,2.5,2.5,0,0,Math.PI*2);ctx.fill();
+  R('#ffaa00',15,5,2,1);
+  // マスクのひも
+  R('#9a8010',5,5,3,2);R('#9a8010',17,5,3,2);
+
+  // ===== 編み笠（一番最後に描く・全部覆う）=====
+  // 笠のひも（顔横に垂れる）
+  R('#9a8010',7,-7,2,13);R('#9a8010',15,-7,2,13);
+  // 笠のつば影
+  ctx.fillStyle='#7a6010';ctx.beginPath();ctx.ellipse(12,-9,17,4,0,0,Math.PI*2);ctx.fill();
+  // 笠のつば（メイン）
+  ctx.fillStyle=OL;ctx.beginPath();ctx.ellipse(12,-10,17,4,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#c09828';ctx.beginPath();ctx.ellipse(12,-10,16,3,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#e0b840';ctx.beginPath();ctx.ellipse(12,-10,15,2,0,0,Math.PI*2);ctx.fill();
+  // 笠の山（ドーム）
+  ctx.fillStyle=OL;ctx.beginPath();ctx.ellipse(12,-15,9,6,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#c09828';ctx.beginPath();ctx.ellipse(12,-15,8,5,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#e0b840';ctx.beginPath();ctx.ellipse(12,-16,6,3,0,0,Math.PI*2);ctx.fill();
+  // 編み目テクスチャ
+  ctx.strokeStyle='#8a7010';ctx.lineWidth=0.6;
+  for(let i=-3;i<=3;i++){ctx.globalAlpha=0.35;ctx.beginPath();ctx.moveTo(12+i*5,-13);ctx.lineTo(12+i*3,-6);ctx.stroke();}
+  ctx.globalAlpha=1;
+  // クローク揺れ
+  if(_wf>0){const ca=Math.sin(_wf/6)*.1;ctx.globalAlpha=Math.abs(ca)+.04;RR('#181830',-5,28,5,9,3);RR('#181830',24,28,5,9,3);ctx.globalAlpha=1;}
 }
 
 function drawMataki(){
