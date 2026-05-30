@@ -374,6 +374,7 @@ function initPlayer(ci){
     spd:c.spd,jmp:c.jmp,djump:c.djump,
     weaponLv:0,
     diving:false,
+    walkFrame:0,
   };
 }
 
@@ -395,6 +396,8 @@ function updatePlayer(){
     else if(left){player.vx=Math.max(player.vx-0.6,-player.spd);player.facing=-1;}
     else{player.vx*=player.onGround?0.7:0.88;}
   }
+  if(player.onGround&&Math.abs(player.vx)>0.5)player.walkFrame++;
+  else if(!player.onGround||Math.abs(player.vx)<=0.5)player.walkFrame=0;
 
   player.vy+=GRAVITY;
   if(player.vy>18)player.vy=18;
@@ -1287,6 +1290,7 @@ function drawPlatforms(){
 //  キャラクター描画
 // ================================================================
 const VS=1.6; // 視覚スケール（当たり判定より大きく描く）
+let _wf=0; // 歩行フェーズ（drawPlayer→drawCharAtへ渡す）
 function drawCharAt(ci){
   switch(ci){
     case 0: drawJubei();break;
@@ -1304,10 +1308,14 @@ function drawPlayer(){
   const cw=CHARS[ci].w, ch=CHARS[ci].h;
 
   ctx.save();
-  // 足元を基準にVSスケールで拡大
-  ctx.translate(f>0?px:px+cw, py+ch);
+  _wf=player.walkFrame;
+  const moving=Math.abs(player.vx)>0.5&&player.onGround;
+  const lean=moving?-0.09:0; // 前傾
+  const bob=moving?Math.sin(player.walkFrame/6)*1.2:0; // 上下ボブ
+  ctx.translate(f>0?px:px+cw, py+ch+bob);
   ctx.scale(f*VS, VS);
   ctx.translate(0, -ch);
+  if(lean)ctx.transform(1,0,lean,1,0,0);
   drawCharAt(ci);
   ctx.restore();
 
@@ -1332,13 +1340,14 @@ function drawJubei(){
   R('#c8c8c8',25,2,3,8);    // 穂先
   R('#888',25,2,3,3);       // 穂先先端
   R('#6a3a10',24,36,5,4);   // 石突き
-  // ===== 脚 =====
-  R('#3a2a10',6,30,7,10);   // 左脚（袴）
-  R('#3a2a10',15,30,7,10);  // 右脚
-  R('#2a1a08',7,36,5,4);    // 左足
-  R('#2a1a08',16,36,5,4);   // 右足
-  R('#4a3a18',5,28,8,4);    // 袴折り目左
-  R('#4a3a18',15,28,8,4);   // 袴折り目右
+  // ===== 脚（歩行アニメ）=====
+  {const wf=Math.floor(_wf/9)%2,la=wf?3:-3,ra=wf?-3:3;
+  R('#3a2a10',6+la,30,7,10);
+  R('#3a2a10',15+ra,30,7,10);
+  R('#2a1a08',7+la,37,5,3);
+  R('#2a1a08',16+ra,37,5,3);
+  R('#4a3a18',5+la,28,8,3);
+  R('#4a3a18',15+ra,28,8,3);}
   // ===== 胴体（軽装鎧）=====
   R('#1e2d50',4,14,20,16);  // 胴鎧
   R('#16214a',4,14,20,3);   // 鎧上端ライン
@@ -1386,13 +1395,14 @@ function drawKarasu(){
   R('#7a5a10',22,4,3,28);   // 弓の弦材
   R('#cc9920',22,2,3,6);    // 弓上端
   R('#cc9920',22,26,3,6);   // 弓下端
-  // ===== 脚 =====
-  R('#111',4,28,7,12);      // 左脚
-  R('#111',13,28,7,12);     // 右脚
-  R('#1a1a1a',5,28,5,4);    // 左脚上
-  R('#1a1a1a',14,28,5,4);   // 右脚上
-  R('#050505',5,36,5,4);    // 左足
-  R('#050505',14,36,5,4);   // 右足
+  // ===== 脚（歩行アニメ）=====
+  {const wf=Math.floor(_wf/9)%2,la=wf?3:-3,ra=wf?-3:3;
+  R('#111',4+la,28,7,12);
+  R('#111',13+ra,28,7,12);
+  R('#1a1a1a',5+la,28,5,4);
+  R('#1a1a1a',14+ra,28,5,4);
+  R('#050505',5+la,36,5,4);
+  R('#050505',14+ra,36,5,4);}
   // ===== 外套（体）=====
   R('#12121a',1,14,22,16);  // 外套本体
   R('#0a0a12',2,14,20,3);   // 外套上端
@@ -1429,13 +1439,14 @@ function drawKarasu(){
 
 function drawMataki(){
   const SK2='#c86040';       // マタキチ肌色
-  // ===== 脚 =====
-  R('#4a2a10',5,30,11,12);  // 左脚（太い）
-  R('#4a2a10',16,30,11,12); // 右脚
-  R('#3a1a08',6,38,9,4);    // 左足
-  R('#3a1a08',17,38,9,4);   // 右足
-  R('#6a3a18',5,28,10,4);   // 左膝
-  R('#6a3a18',17,28,10,4);  // 右膝
+  // ===== 脚（歩行アニメ）=====
+  {const wf=Math.floor(_wf/9)%2,la=wf?3:-3,ra=wf?-3:3;
+  R('#4a2a10',5+la,30,11,12);
+  R('#4a2a10',16+ra,30,11,12);
+  R('#3a1a08',6+la,38,9,4);
+  R('#3a1a08',17+ra,38,9,4);
+  R('#6a3a18',5+la,28,10,4);
+  R('#6a3a18',17+ra,28,10,4);}
   // ===== 腰布・帯 =====
   R('#8b6520',3,24,26,8);   // 腰布
   R('#aa8030',4,24,24,3);   // 腰布上端
@@ -1485,13 +1496,14 @@ function drawMomotaro(){
   R('#c8c8c8',23,2,2,24);   // 刀ハイライト
   R('#cc9900',21,2,5,7);    // 鍔（つば）
   R('#8B6914',22,0,4,5);    // 柄
-  // ===== 脚 =====
-  R('#1a3870',7,30,8,12);   // 左脚（袴）
-  R('#1a3870',17,30,8,12);  // 右脚
-  R('#102860',8,36,6,6);    // 左足
-  R('#102860',18,36,6,6);   // 右足
-  R('#2a4890',6,28,9,4);    // 袴折り目左
-  R('#2a4890',17,28,9,4);   // 袴折り目右
+  // ===== 脚（歩行アニメ）=====
+  {const wf=Math.floor(_wf/9)%2,la=wf?3:-3,ra=wf?-3:3;
+  R('#1a3870',7+la,30,8,12);
+  R('#1a3870',17+ra,30,8,12);
+  R('#102860',8+la,36,6,6);
+  R('#102860',18+ra,36,6,6);
+  R('#2a4890',6+la,28,9,4);
+  R('#2a4890',17+ra,28,9,4);}
   // ===== 体（陣羽織）=====
   R('#cc1100',3,12,22,18);  // 陣羽織（赤）
   R('#ee2200',4,12,20,4);   // 陣羽織上部
