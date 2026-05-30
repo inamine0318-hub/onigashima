@@ -1392,7 +1392,7 @@ function drawPlatforms(){
 // ================================================================
 //  キャラクター描画
 // ================================================================
-const VS=0.95; // 視覚スケール（月の裏側と同程度）
+const VS=1.3; // 視覚スケール（スマホ適正サイズ）
 let _wf=0,_atk=0,_air=false,_combo=0; // アニメ状態グローバル
 function drawCharAt(ci){
   switch(ci){
@@ -1504,12 +1504,15 @@ function drawJubei(){
   ctx.fillStyle='#f0a860';ctx.beginPath();ctx.ellipse(4,8,2,2.5,-.2,0,Math.PI*2);ctx.fill();
   ctx.fillStyle=OL;ctx.beginPath();ctx.ellipse(24,8,3,3.5,.2,0,Math.PI*2);ctx.fill();
   ctx.fillStyle='#f0a860';ctx.beginPath();ctx.ellipse(24,8,2,2.5,.2,0,Math.PI*2);ctx.fill();
-  // ===== 髷（頭頂部で高く結んだ）=====
-  R(OL,9,0,10,8);R('#241000',10,1,8,7);R('#1a0800',11,1,6,4);
-  ctx.fillStyle=OL;ctx.beginPath();ctx.ellipse(14,-4,5,7,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#241000';ctx.beginPath();ctx.ellipse(14,-4,4,6,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#341800';ctx.beginPath();ctx.ellipse(13,-5,2,3,0,0,Math.PI*2);ctx.fill();
-  RR('#cc2200',11,-1,6,3,1);
+  // ===== 髷（太い髪束で頭頂部に結んだ）=====
+  // 頭から上に伸びる太い髪の束
+  R(OL,7,-2,16,12);R('#201000',8,-1,14,10);R('#2e1600',9,-1,12,7);
+  // 結んだ部分（大きめ）
+  ctx.fillStyle=OL;ctx.beginPath();ctx.ellipse(14,-7,7,8,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#241000';ctx.beginPath();ctx.ellipse(14,-7,6,7,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#3c1e00';ctx.beginPath();ctx.ellipse(13,-8,3,4,0,0,Math.PI*2);ctx.fill();
+  // 結び紐（赤・目立つ）
+  RR('#dd0000',9,-3,10,4,2);R('#ff2200',10,-3,8,2);
   // ===== 目（3/4横向き：前目大・後目小）=====
   const ey=_atk?3:4;
   // 後ろ目（小・奥に見える）
@@ -1601,22 +1604,26 @@ function drawKarasu(){
   // マスクのひも
   R('#9a8010',5,5,3,2);R('#9a8010',17,5,3,2);
 
-  // ===== 編み笠（一番最後に描く・全部覆う）=====
+  // ===== 編み笠（目の上まで深くかぶせる）=====
   // 笠のひも（顔横に垂れる）
-  R('#9a8010',7,-7,2,13);R('#9a8010',15,-7,2,13);
-  // 笠のつば影
-  ctx.fillStyle='#7a6010';ctx.beginPath();ctx.ellipse(12,-9,17,4,0,0,Math.PI*2);ctx.fill();
-  // 笠のつば（メイン）
-  ctx.fillStyle=OL;ctx.beginPath();ctx.ellipse(12,-10,17,4,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#c09828';ctx.beginPath();ctx.ellipse(12,-10,16,3,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#e0b840';ctx.beginPath();ctx.ellipse(12,-10,15,2,0,0,Math.PI*2);ctx.fill();
+  R('#9a8010',7,2,2,14);R('#9a8010',16,2,2,14);
+  // 笠のつば影（下面）
+  ctx.fillStyle='#7a6010';ctx.beginPath();ctx.ellipse(12,1,18,5,0,0,Math.PI*2);ctx.fill();
+  // 笠のつば（メイン）- 目の上まで深くかぶさる
+  ctx.fillStyle=OL;ctx.beginPath();ctx.ellipse(12,0,18,5,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#c09828';ctx.beginPath();ctx.ellipse(12,0,17,4,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#e0b840';ctx.beginPath();ctx.ellipse(12,-1,16,3,0,0,Math.PI*2);ctx.fill();
+  // つばの縁に影（目の上に落ちる影）
+  ctx.globalAlpha=0.4;ctx.fillStyle='#000';
+  ctx.beginPath();ctx.ellipse(12,2,16,4,0,0,Math.PI*2);ctx.fill();
+  ctx.globalAlpha=1;
   // 笠の山（ドーム）
-  ctx.fillStyle=OL;ctx.beginPath();ctx.ellipse(12,-15,9,6,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#c09828';ctx.beginPath();ctx.ellipse(12,-15,8,5,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#e0b840';ctx.beginPath();ctx.ellipse(12,-16,6,3,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=OL;ctx.beginPath();ctx.ellipse(12,-5,10,7,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#c09828';ctx.beginPath();ctx.ellipse(12,-5,9,6,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#e0b840';ctx.beginPath();ctx.ellipse(12,-6,7,4,0,0,Math.PI*2);ctx.fill();
   // 編み目テクスチャ
   ctx.strokeStyle='#8a7010';ctx.lineWidth=0.6;
-  for(let i=-3;i<=3;i++){ctx.globalAlpha=0.35;ctx.beginPath();ctx.moveTo(12+i*5,-13);ctx.lineTo(12+i*3,-6);ctx.stroke();}
+  for(let i=-3;i<=3;i++){ctx.globalAlpha=0.3;ctx.beginPath();ctx.moveTo(12+i*5,-3);ctx.lineTo(12+i*3,3);ctx.stroke();}
   ctx.globalAlpha=1;
   // クローク揺れ
   if(_wf>0){const ca=Math.sin(_wf/6)*.1;ctx.globalAlpha=Math.abs(ca)+.04;RR('#181830',-5,28,5,9,3);RR('#181830',24,28,5,9,3);ctx.globalAlpha=1;}
