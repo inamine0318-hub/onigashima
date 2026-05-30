@@ -1513,61 +1513,81 @@ function drawKarasu(){
 }
 
 function drawMataki(){
-  const SK2='#e07050',SK2L='#f09060',SK2D='#a03020';
+  const SK2='#d07050',SK2L='#e88060',SK2D='#8a2818';
   const wf=Math.floor(_wf/9)%2,la=wf?3:-3,ra=wf?-3:3;
   const ext=_atk===1?8:_atk===2?16:_atk>=3?24:0;
   const bk=_atk>0?4:0,air=_air;
-  // 脚（角丸）
+  // ===== 脚（太い・素足っぽい）=====
   const lya=air?-6:0,lyb=air?4:0;
-  RR(OL,3+la,26+lya,13,17,4);RR('#4e2c14',4+la,27+lya,11,15,3);RR('#6a4020',4+la,27+lya,11,6,3);R('#2e1808',4+la,37+lya,11,5);
-  RR(OL,16+ra,26+lyb,13,17,4);RR('#4e2c14',17+ra,27+lyb,11,15,3);RR('#6a4020',17+ra,27+lyb,11,6,3);R('#2e1808',17+ra,37+lyb,11,5);
-  R('#301808',10+la,26+lya,3,16);R('#301808',20+ra,26+lyb,3,16);
-  // 腰布（roundRect）
-  RR(OL,2,24,28,8,4);RR('#8a6420',3,25,26,6,3);R('#ac8030',4,25,24,2);R('#5a3e10',3,29,26,2);
-  RR(OL,11,22,10,5,3);RR('#cc9400',12,23,8,3,2);R('#eebb00',13,23,6,1);
-  // 胴体（roundRect、マッスル）
-  RR(OL,2,10,28,16,5);RR(SK2,3,11,26,14,4);RR(SK2L,3,11,26,5,4);R(SK2D,3,20,26,5);
-  R('#b04830',14,12,8,14);
-  for(let i=0;i<3;i++){RR('#a83820',4,15+i*4,9,3,2);RR('#a83820',19,15+i*4,9,3,2);R('#983010',13,15+i*4,7,2);}
-  // 丸い肩（arc・大）
-  ctx.fillStyle=OL;ctx.beginPath();ctx.arc(3,13,11,Math.PI*.3,Math.PI*1.7);ctx.fill();
-  ctx.fillStyle=SK2;ctx.beginPath();ctx.arc(3,13,9,Math.PI*.3,Math.PI*1.7);ctx.fill();
-  ctx.fillStyle=SK2L;ctx.beginPath();ctx.arc(3,13,7,Math.PI*.3,Math.PI);ctx.fill();
-  ctx.fillStyle=OL;ctx.beginPath();ctx.arc(29,13,11,Math.PI*1.3,Math.PI*.7);ctx.fill();
-  ctx.fillStyle=SK2;ctx.beginPath();ctx.arc(29,13,9,Math.PI*1.3,Math.PI*.7);ctx.fill();
-  // 後腕（太いカプセル）
-  cap(OL,-bk-1,9,9,23);cap(SK2,-bk,10,7,21);cap(SK2L,-bk,10,7,7);
-  cap(OL,-bk-2,28,12,11);cap('#882e1e',-bk-1,29,10,9);RR('#a03828',-bk,29,8,5,3);
-  // 前腕・拳（攻撃：ext伸び）
+  cap(OL,3+la,27+lya,13,17);cap('#8a5030',4+la,28+lya,11,15);cap('#b07040',4+la,28+lya,11,6);
+  cap(OL,16+ra,27+lyb,13,17);cap('#8a5030',17+ra,28+lyb,11,15);cap('#b07040',17+ra,28+lyb,11,6);
+  // 草履
+  RR(OL,1+la,42+lya,16,5,2);RR('#c8a028',2+la,43+lya,14,4,2);R('#7a5e10',5+la,43+lya,6,2);
+  RR(OL,15+ra,42+lyb,16,5,2);RR('#c8a028',16+ra,43+lyb,14,4,2);R('#7a5e10',19+ra,43+lyb,6,2);
+
+  // ===== ノースリーブのボロ着 =====
+  RR(OL,3,15,26,18,5);RR('#b07840',4,16,24,16,4);RR('#d09050',4,16,24,6,4);R('#7a4820',4,28,24,4);
+  // ボロい裾（不規則な裾）
+  ctx.fillStyle='#b07840';
+  ctx.beginPath();ctx.moveTo(3,30);ctx.lineTo(1,36);ctx.lineTo(6,32);ctx.lineTo(9,38);
+  ctx.lineTo(14,32);ctx.lineTo(17,37);ctx.lineTo(22,32);ctx.lineTo(26,38);
+  ctx.lineTo(30,32);ctx.lineTo(30,30);ctx.closePath();ctx.fill();
+  // 帯
+  RR(OL,3,27,26,5,3);RR('#882200',4,28,24,3,2);R('#cc3300',5,28,22,1);
+  // 汚れ・ほつれ
+  R('#7a4820',7,22,4,3);R('#7a4820',20,24,5,2);ctx.globalAlpha=0.3;R('#3a1a08',12,18,8,5);ctx.globalAlpha=1;
+
+  // ===== 肩（arc・大）=====
+  ctx.fillStyle=OL;ctx.beginPath();ctx.arc(4,14,11,Math.PI*.3,Math.PI*1.7);ctx.fill();
+  ctx.fillStyle=SK2;ctx.beginPath();ctx.arc(4,14,9,Math.PI*.3,Math.PI*1.7);ctx.fill();
+  ctx.fillStyle=SK2L;ctx.beginPath();ctx.arc(4,14,6,Math.PI*.3,Math.PI);ctx.fill();
+  ctx.fillStyle=OL;ctx.beginPath();ctx.arc(28,14,11,Math.PI*1.3,Math.PI*.7);ctx.fill();
+  ctx.fillStyle=SK2;ctx.beginPath();ctx.arc(28,14,9,Math.PI*1.3,Math.PI*.7);ctx.fill();
+
+  // ===== 腕（極太・袖なし＝素肌）=====
+  cap(OL,-bk-2,11,11,23);cap(SK2,-bk-1,12,9,21);cap(SK2L,-bk-1,12,9,7);cap(SK2D,-bk-1,26,9,6);
+  cap(OL,-bk-3,30,14,12);cap('#882020',-bk-2,31,12,10);RR('#aa3030',-bk-1,31,10,5,3);
   if(_atk>0){
     const eA=Math.floor(ext*.2),eB=Math.floor(ext*.4);
-    cap(OL,24,8,9,21);cap(SK2,25,9,7,19);cap(SK2L,25,9,7,7);
-    cap(OL,29+eB,6,13+eA,16);cap('#882e1e',30+eB,7,11+eA,14);RR('#a03828',31+eB,7,9+eA,6,3);
-    if(_atk>=3){ctx.globalAlpha=0.55;RR('#cc4400',29+ext,4,18,20,5);ctx.globalAlpha=0.25;RR('#ff8800',27+ext,2,22,24,6);ctx.globalAlpha=1;}
+    cap(OL,23,10,11,23);cap(SK2,24,11,9,21);cap(SK2L,24,11,9,7);
+    cap(OL,30+eB,7,14+eA,15);cap('#882020',31+eB,8,12+eA,13);RR('#bb3030',32+eB,8,10+eA,6,4);
+    if(_atk>=3){ctx.globalAlpha=0.5;RR('#ff4400',30+ext,5,18,18,5);ctx.globalAlpha=0.2;RR('#ff8800',28+ext,3,22,22,6);ctx.globalAlpha=1;}
   }else{
-    cap(OL,24,9,9,23);cap(SK2,25,10,7,21);cap(SK2L,25,10,7,7);
-    cap(OL,22,27,12,11);cap('#882e1e',23,28,10,9);RR('#a03828',24,28,8,5,3);
+    cap(OL,23,11,11,23);cap(SK2,24,12,9,21);cap(SK2L,24,12,9,7);cap(SK2D,24,26,9,6);
+    cap(OL,21,30,14,12);cap('#882020',22,31,12,10);RR('#aa3030',23,31,10,5,3);
   }
-  // 首（カプセル）
-  cap(OL,12,8,8,6);cap(SK2,13,9,6,5);
-  // 頭（大きいellipse）
-  ctx.fillStyle=OL;ctx.beginPath();ctx.ellipse(16,6,13,9,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle=SK2;ctx.beginPath();ctx.ellipse(16,6,12,8,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle=SK2L;ctx.beginPath();ctx.ellipse(16,4,12,4,0,Math.PI,0);ctx.fill();
-  ctx.fillStyle=SK2D;ctx.beginPath();ctx.ellipse(16,10,12,4,0,0,Math.PI);ctx.fill();
-  // 鉢巻き
-  R('#f0f0f0',4,1,24,6);R('#ffffff',5,1,22,2);R('#aaaaaa',4,5,6,2);R('#aaaaaa',22,5,6,2);
-  R(OL,4,1,3,6);R(OL,25,1,3,6);
-  // 目
-  const ey=_atk?5:6;
-  R(OL,7,ey,8,6);R('#f4ecd8',8,ey+1,6,5);
-  ctx.fillStyle='#222';ctx.beginPath();ctx.ellipse(11,ey+3,2.5,2.5,0,0,Math.PI*2);ctx.fill();
-  R('#fff',10,ey+2,1,1);
-  R(OL,17,ey,8,6);R('#f4ecd8',17,ey+1,6,5);
-  ctx.fillStyle='#222';ctx.beginPath();ctx.ellipse(20,ey+3,2.5,2.5,0,0,Math.PI*2);ctx.fill();
-  R('#fff',19,ey+2,1,1);
-  if(_atk){R(OL,5,ey-1,13,4);R(OL,17,ey-1,13,4);}else{R(OL,5,5,11,3);R(OL,17,5,11,3);}
-  if(_atk){R(OL,10,12,12,5);R('#f8b060',11,13,10,3);}else{R('#cc3020',12,12,9,3);R('#aa1810',13,11,7,2);}
+
+  // ===== 首（太い）=====
+  cap(OL,11,12,10,7);cap(SK2,12,13,8,6);
+
+  // ===== 坊主頭（大・つるつる）=====
+  ctx.fillStyle=OL;ctx.beginPath();ctx.ellipse(16,7,14,11,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=SK2;ctx.beginPath();ctx.ellipse(16,7,13,10,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=SK2L;ctx.beginPath();ctx.ellipse(16,4,13,6,0,Math.PI,0);ctx.fill();
+  ctx.fillStyle=SK2D;ctx.beginPath();ctx.ellipse(16,13,13,5,0,0,Math.PI);ctx.fill();
+  // 坊主の短い毛（影・剃り後）
+  ctx.globalAlpha=0.18;ctx.fillStyle='#1a0800';ctx.beginPath();ctx.ellipse(16,5,9,5,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+
+  // ===== 髭面（無精髭・顎まわり全体）=====
+  ctx.fillStyle='#3a2010';ctx.beginPath();ctx.ellipse(16,15,12,7,0,0,Math.PI);ctx.fill();
+  // 髭の毛（線で表現・固定位置）
+  ctx.strokeStyle='#2a1000';ctx.lineWidth=0.9;
+  const bpos=[7,9.5,11.5,13.5,15.5,18,20,22,24,26];
+  for(let i=0;i<bpos.length;i++){ctx.globalAlpha=0.4;ctx.beginPath();ctx.moveTo(bpos[i],12+i%2);ctx.lineTo(bpos[i]+0.5,14+i%3);ctx.stroke();}
+  ctx.globalAlpha=1;
+  // 口ひげ（鼻の下）
+  R(OL,9,10,5,2);R(OL,18,10,5,2);
+
+  // ===== 目（鋭い・太眉）=====
+  const ey=_atk?4:5;
+  R(OL,5,ey,10,8);R('#f0e0c0',6,ey+1,8,7);
+  ctx.fillStyle='#181818';ctx.beginPath();ctx.ellipse(10,ey+5,3.5,3.5,0,0,Math.PI*2);ctx.fill();
+  R('#fff',9,ey+4,2,1);
+  R(OL,17,ey,10,8);R('#f0e0c0',17,ey+1,8,7);
+  ctx.fillStyle='#181818';ctx.beginPath();ctx.ellipse(21,ey+5,3.5,3.5,0,0,Math.PI*2);ctx.fill();
+  R('#fff',20,ey+4,2,1);
+  if(_atk){R(OL,4,ey-2,13,5);R(OL,16,ey-2,13,5);}else{R(OL,4,ey-1,13,4);R(OL,16,ey-1,13,4);}
+  if(_atk){R(OL,8,14,16,7);R('#f8c080',9,15,14,5);}else{R('#aa2a10',7,14,18,4);R('#cc4020',8,14,16,2);}
 }
 
 function drawMomotaro(){
