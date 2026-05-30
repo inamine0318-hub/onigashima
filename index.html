@@ -1335,130 +1335,143 @@ function drawPlayer(){
 }
 
 function R(col,x,y,w,h){ctx.fillStyle=col;ctx.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));}
+// 角丸矩形
+function RR(col,x,y,w,h,r){ctx.fillStyle=col;ctx.beginPath();if(ctx.roundRect)ctx.roundRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h),r||3);else ctx.rect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));ctx.fill();}
+// カプセル（上下半円＋中間矩形）
+function cap(col,x,y,w,h){const r=w/2,m=Math.max(0,h-w);ctx.fillStyle=col;ctx.beginPath();ctx.arc(x+r,y+r,r,Math.PI,0);if(m>0)ctx.rect(x,y+r,w,m);ctx.arc(x+r,y+r+m,r,0,Math.PI);ctx.closePath();ctx.fill();}
 const SK='#f0c080', OL='#1a1a1a';
 
 function drawJubei(){
   const wf=Math.floor(_wf/9)%2,la=wf?3:-3,ra=wf?-3:3;
   const ext=_atk===1?7:_atk===2?14:_atk>=3?22:0;
   const bk=_atk>0?3:0,air=_air;
-  const AR='#1c2a52',ARL='#2c3c68',ARD='#101e3e';
-  // 槍（待機：縦持ち、攻撃：横突き）
+  // 槍
   if(!_atk){
-    R(OL,24,0,5,40); R('#7a4a18',25,2,3,36);
-    R('#c4c8d4',24,0,4,9); R('#8890a0',24,0,4,3);
-    R('#c89800',22,7,7,3); R('#503a10',25,37,3,3);
+    R(OL,24,0,5,40);R('#7a4a18',25,2,3,36);
+    R('#c4c8d4',24,0,4,9);R('#8890a0',24,0,4,3);
+    R('#c89800',22,7,7,3);R('#503a10',25,37,3,3);
   }
-  // 脚
+  // 脚（角丸）
   const lya=air?-5:0,lyb=air?3:0;
-  R(OL,4+la,26+lya,10,15); R(AR,5+la,27+lya,8,13); R(ARL,5+la,27+lya,8,5); R(ARD,5+la,36+lya,8,4);
-  R(OL,14+ra,26+lyb,10,15); R(AR,15+ra,27+lyb,8,13); R(ARL,15+ra,27+lyb,8,5); R(ARD,15+ra,36+lyb,8,4);
-  R(ARD,10+la,26+lya,2,14); R(ARD,18+ra,26+lyb,2,14);
-  // 腰帯
-  R(OL,3,24,22,7); R('#c08000',4,25,20,5); R('#e8a800',5,25,18,2); R('#806000',4,28,20,2);
-  // 胴鎧
-  R(OL,2,11,24,15); R(AR,3,12,22,13); R(ARL,3,12,22,5); R(ARD,3,21,22,4);
-  R('#384c7a',3,12,3,13); R('#0a1426',16,13,8,11);
-  R(ARD,5,18,16,2); R(ARD,5,22,16,1); R('#2a3c62',3,12,6,6);
-  // 丸い肩（ctx.arc）
-  ctx.fillStyle=OL;ctx.beginPath();ctx.arc(4,13,8,Math.PI*.35,Math.PI*1.65);ctx.fill();
-  ctx.fillStyle='#526070';ctx.beginPath();ctx.arc(4,13,6,Math.PI*.35,Math.PI*1.65);ctx.fill();
-  ctx.fillStyle='#789aaa';ctx.beginPath();ctx.arc(4,13,4,Math.PI*.35,Math.PI);ctx.fill();
-  ctx.fillStyle=OL;ctx.beginPath();ctx.arc(24,13,8,Math.PI*1.35,Math.PI*.65);ctx.fill();
-  ctx.fillStyle='#526070';ctx.beginPath();ctx.arc(24,13,6,Math.PI*1.35,Math.PI*.65);ctx.fill();
-  // 後腕（攻撃で引く）
-  R(OL,-bk,14,6,13); R('#c8943c',1-bk,15,4,11); R('#dea850',1-bk,15,4,4); R('#9a6822',1-bk,22,4,4);
-  // 前腕（攻撃でextぶん伸びる）
+  RR(OL,4+la,26+lya,10,15,3);RR('#3a2214',5+la,27+lya,8,13,2);RR('#4e3222',5+la,27+lya,8,5,2);R('#201008',5+la,36+lya,8,5);
+  RR(OL,13+ra,26+lyb,10,15,3);RR('#3a2214',14+ra,27+lyb,8,13,2);RR('#4e3222',14+ra,27+lyb,8,5,2);R('#201008',14+ra,36+lyb,8,5);
+  R('#241208',11+la,26+lya,2,14);R('#241208',17+ra,26+lyb,2,14);
+  // 腰帯（角丸）
+  RR(OL,3,24,22,7,3);RR('#c08000',4,25,20,5,2);R('#e8a800',5,25,18,2);R('#806000',4,28,20,2);
+  // 胴鎧（roundRect）
+  RR(OL,2,11,24,15,4);RR('#1c2a52',3,12,22,13,3);RR('#2c3c68',3,12,22,5,3);R('#101e3e',3,21,22,4);
+  R('#384c7a',3,12,3,13);R('#0a1426',16,13,8,11);R('#0e1e3e',5,18,16,2);
+  // 丸い肩（arc）
+  ctx.fillStyle=OL;ctx.beginPath();ctx.arc(4,13,9,Math.PI*.3,Math.PI*1.7);ctx.fill();
+  ctx.fillStyle='#526070';ctx.beginPath();ctx.arc(4,13,7,Math.PI*.3,Math.PI*1.7);ctx.fill();
+  ctx.fillStyle='#789aaa';ctx.beginPath();ctx.arc(4,13,5,Math.PI*.3,Math.PI);ctx.fill();
+  ctx.fillStyle=OL;ctx.beginPath();ctx.arc(24,13,9,Math.PI*1.3,Math.PI*.7);ctx.fill();
+  ctx.fillStyle='#526070';ctx.beginPath();ctx.arc(24,13,7,Math.PI*1.3,Math.PI*.7);ctx.fill();
+  // 後腕（カプセル）
+  cap(OL,-bk-1,13,7,14);cap('#c8943c',-bk,14,5,12);cap('#dea850',-bk,14,5,5);
+  // 前腕（攻撃：ext伸び）
   if(_atk>0){
     const eA=Math.floor(ext*.2),eB=Math.floor(ext*.4);
-    R(OL,22,11,5+eA,8); R('#c8943c',23,12,3+eA,6); R('#dea850',23,12,3+eA,2);
-    R(OL,25+eB,9,5+eA,9); R('#c8943c',26+eB,10,3+eA,7); R('#dea850',26+eB,10,3+eA,2);
-    // 槍（横突き・ext分伸びる）
-    R(OL,2,16,28+ext,5); R('#7a4a18',3,17,26+ext,3);
-    R(OL,28+ext,14,9,7); R('#c4c8d4',29+ext,15,7,5); R('#8890a0',29+ext,15,5,2);
+    cap(OL,21,10,7,9);cap('#c8943c',22,11,5,7);cap('#dea850',22,11,5,3);
+    cap(OL,25+eB,8,7,10);cap('#c8943c',26+eB,9,5,8);cap('#dea850',26+eB,9,5,3);
+    R(OL,2,16,28+ext,5);R('#7a4a18',3,17,26+ext,3);
+    R(OL,28+ext,14,9,7);R('#c4c8d4',29+ext,15,7,5);R('#8890a0',29+ext,15,5,2);
     R('#c89800',8,14,8,4);
-    R(OL,24+eB+eA,9,6,6); R('#c06022',25+eB+eA,10,4,4);
+    cap(OL,24+eB+eA,8,7,8);RR('#c06022',25+eB+eA,9,5,6,2);
   }else{
-    R(OL,22,14,6,13); R('#c8943c',23,15,4,11); R('#dea850',23,15,4,4); R('#c06022',23,23,4,4);
+    cap(OL,21,13,7,14);cap('#c8943c',22,14,5,12);cap('#dea850',22,14,5,5);
+    RR('#c06022',23,23,5,5,2);
   }
-  // 首・後頭部
-  R(OL,10,9,8,4); R('#d8944e',11,10,6,3);
-  R('#140a02',5,0,3,9); R('#140a02',20,0,3,9);
-  // 頭
-  R(OL,6,0,16,12); R('#d8944e',7,1,14,11); R('#eea860',7,1,14,4); R('#b07038',7,9,14,3);
+  // 首（カプセル）
+  cap(OL,10,9,8,5);cap('#d8944e',11,10,6,4);
+  // 後頭部の髪
+  R('#140a02',5,0,3,10);R('#140a02',20,0,3,10);
+  // 頭（ellipse）
+  ctx.fillStyle=OL;ctx.beginPath();ctx.ellipse(14,6,10,8,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#d8944e';ctx.beginPath();ctx.ellipse(14,6,9,7,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#eea860';ctx.beginPath();ctx.ellipse(14,4,9,4,0,Math.PI,0);ctx.fill();
+  ctx.fillStyle='#b07038';ctx.beginPath();ctx.ellipse(14,9,9,3,0,0,Math.PI);ctx.fill();
   // 鉢巻き
-  R('#dd0000',5,1,18,6); R('#ff2200',6,1,16,2); R('#880000',4,4,6,3); R('#aa1100',4,3,4,5);
+  R('#dd0000',5,1,18,6);R('#ff2200',6,1,16,2);R('#880000',4,4,6,3);R('#aa1100',4,3,4,5);
   // 前髪
-  R('#140a02',6,0,16,3); R('#140a02',6,2,4,5); R('#140a02',18,2,4,5);
+  R('#140a02',6,0,16,3);R('#140a02',6,2,4,6);R('#140a02',18,2,4,6);
   // 目
   const ey=_atk?4:5;
-  R(OL,7,ey,7,5); R('#f8f0e0',8,ey+1,5,4); R('#1840c8',8,ey+1,4,3); R(OL,9,ey+1,3,2); R('#fff',9,ey+1,1,1);
-  R(OL,16,ey,7,5); R('#f8f0e0',16,ey+1,5,4); R('#1840c8',16,ey+1,4,3); R(OL,17,ey+1,3,2); R('#fff',17,ey+1,1,1);
-  if(_atk){R('#1a1a1a',7,ey-1,7,3); R('#1a1a1a',17,ey-1,7,3);}
-  else{R(OL,6,4,8,2); R(OL,16,4,8,2);}
-  if(_atk){R(OL,10,11,7,4); R('#f8b870',11,12,5,2);}
-  else{R('#c05858',10,11,7,2);}
+  R(OL,7,ey,7,5);R('#f8f0e0',8,ey+1,5,4);
+  ctx.fillStyle='#1840c8';ctx.beginPath();ctx.ellipse(10.5,ey+3,2.5,2.5,0,0,Math.PI*2);ctx.fill();
+  R(OL,10,ey+2,2,2);R('#fff',10,ey+2,1,1);
+  R(OL,16,ey,7,5);R('#f8f0e0',16,ey+1,5,4);
+  ctx.fillStyle='#1840c8';ctx.beginPath();ctx.ellipse(18.5,ey+3,2.5,2.5,0,0,Math.PI*2);ctx.fill();
+  R(OL,18,ey+2,2,2);R('#fff',18,ey+2,1,1);
+  if(_atk){R('#1a1a1a',7,ey-1,7,3);R('#1a1a1a',17,ey-1,7,3);}
+  else{R(OL,6,4,8,2);R(OL,16,4,8,2);}
+  if(_atk){R(OL,10,11,7,4);R('#f8b870',11,12,5,2);}else{R('#c05858',10,11,7,2);}
 }
 
 function drawKarasu(){
   const wf=Math.floor(_wf/9)%2,la=wf?3:-3,ra=wf?-3:3;
   const ext=_atk===1?7:_atk===2?14:_atk>=3?22:0;
   const bk=_atk>0?3:0,air=_air;
-  // 弓（待機：右サイドに縦持ち、攻撃：前に出す）
+  // 弓
   if(!_atk){
-    R(OL,19,2,5,32); R('#8a6212',20,3,3,30);
-    R('#c89c1a',20,2,3,5); R('#c89c1a',20,29,3,5); R('#a07c14',21,6,2,22);
-    R('#ccaa33',19,9,1,18);
+    R(OL,19,2,5,32);R('#8a6212',20,3,3,30);R('#c89c1a',20,2,3,5);R('#c89c1a',20,29,3,5);R('#a07c14',21,6,2,22);R('#ccaa33',19,9,1,18);
   }
-  // 脚
+  // 脚（角丸）
   const lya=air?-5:0,lyb=air?3:0;
-  R(OL,2+la,24+lya,8,14); R('#0c0c1a',3+la,25+lya,6,12); R('#1c1c2e',3+la,25+lya,6,4); R('#040408',3+la,34+lya,6,4);
-  R(OL,13+ra,24+lyb,8,14); R('#0c0c1a',14+ra,25+lyb,6,12); R('#1c1c2e',14+ra,25+lyb,6,4); R('#040408',14+ra,34+lyb,6,4);
+  RR(OL,2+la,24+lya,8,14,3);RR('#0c0c1a',3+la,25+lya,6,12,2);RR('#1c1c2e',3+la,25+lya,6,4,2);R('#040408',3+la,34+lya,6,4);
+  RR(OL,13+ra,24+lyb,8,14,3);RR('#0c0c1a',14+ra,25+lyb,6,12,2);RR('#1c1c2e',14+ra,25+lyb,6,4,2);R('#040408',14+ra,34+lyb,6,4);
   // 腰紐
-  R(OL,1,24,22,5); R('#441408',2,25,20,3); R('#882010',3,25,18,1);
-  // 外套（体）
-  R(OL,0,12,24,15); R('#0e0e1e',1,13,22,13); R('#1c1c30',1,13,22,5); R('#060610',1,22,22,4);
-  R('#0c0c1c',0,12,4,13); R('#181828',0,12,3,5);
-  // 外套裾（翻る）
-  R(OL,-2,26,13,7); R('#0c0c1a',-1,27,11,5); R('#181828',-1,27,8,2);
-  R(OL,13,26,13,7); R('#0c0c1a',14,27,11,5); R('#181828',14,27,8,2);
+  RR(OL,1,24,22,5,2);RR('#441408',2,25,20,3,2);
+  // 外套（roundRect）
+  RR(OL,0,12,24,15,5);RR('#0e0e1e',1,13,22,13,4);RR('#1c1c30',1,13,22,5,4);R('#060610',1,22,22,4);
+  // 外套裾（翻る形状）
+  RR(OL,-2,26,13,8,4);RR('#0c0c1a',-1,27,11,6,3);RR('#181828',-1,27,8,3,3);
+  RR(OL,13,26,13,8,4);RR('#0c0c1a',14,27,11,6,3);RR('#181828',14,27,8,3,3);
   // 丸い肩（arc）
   ctx.fillStyle=OL;ctx.beginPath();ctx.arc(2,14,7,Math.PI*.35,Math.PI*1.65);ctx.fill();
   ctx.fillStyle='#141420';ctx.beginPath();ctx.arc(2,14,5,Math.PI*.35,Math.PI*1.65);ctx.fill();
-  ctx.fillStyle='#242430';ctx.beginPath();ctx.arc(2,14,3,Math.PI*.35,Math.PI);ctx.fill();
   ctx.fillStyle=OL;ctx.beginPath();ctx.arc(22,14,7,Math.PI*1.35,Math.PI*.65);ctx.fill();
   ctx.fillStyle='#141420';ctx.beginPath();ctx.arc(22,14,5,Math.PI*1.35,Math.PI*.65);ctx.fill();
-  // 後腕（弦を引く側：攻撃でbk引く）
-  R(OL,-bk,15,5,13); R('#0a0a18',1-bk,16,3,11); R('#161628',1-bk,16,3,4);
-  // 前腕（弓を持つ側：攻撃でext伸びる）
+  // 後腕（カプセル）
+  cap(OL,-bk-1,14,6,13);cap('#0a0a18',-bk,15,4,11);cap('#161628',-bk,15,4,5);
+  // 前腕（弓、攻撃：ext伸び）
   if(_atk>0){
     const eA=Math.floor(ext*.2),eB=Math.floor(ext*.4);
-    // 弓・矢（前面に展開）
-    R(OL,-1,4,5,30); R('#8a6212',0,5,3,28); R('#c89c1a',0,4,3,5); R('#c89c1a',0,29,3,5);
-    R('#ccaa33',-1,9,14,1); // 引かれた弦
-    R('#ccaa22',0,9,8,2); // 矢
-    R(OL,2,14,4+eA,9); R('#0a0a18',3,15,2+eA,7); R('#1a1a2c',3,15,2+eA,3);
-    R(OL,4+eB,12,5+eA,10); R('#0a0a18',5+eB,13,3+eA,8);
-    R('#b07a00',16-bk,18,6,4); // 弦を引く手
+    R(OL,-1,4,5,30);R('#8a6212',0,5,3,28);R('#c89c1a',0,4,3,5);R('#c89c1a',0,29,3,5);
+    R('#ccaa33',-1,9,14,1);R('#ccaa22',0,9,8,2);
+    cap(OL,2,13,5+eA,10);cap('#0a0a18',3,14,3+eA,8);
+    cap(OL,4+eB,11,5+eA,11);cap('#0a0a18',5+eB,12,3+eA,9);
+    RR('#b07a00',16-bk,17,6,5,2);
   }else{
     const sw=_wf>0?(wf===0?1:-1):0;
-    R(OL,17+sw,15,5,10); R('#0a0a18',18+sw,16,3,8); R('#1a1a2c',18+sw,16,3,3);
-    R('#b07a00',18+sw,22,5,4);
+    cap(OL,16+sw,14,5,11);cap('#0a0a18',17+sw,15,3,9);
+    RR('#b07a00',17+sw,21,5,5,2);
   }
-  // 頭巾
-  R(OL,2,0,20,17); R('#08080e',3,1,18,16); R('#16162a',3,1,18,5); R('#04040a',3,12,18,5);
-  R('#0e0c1c',2,4,3,11); R('#0e0c1c',19,4,3,11); R('#181828',3,1,4,16);
-  // 面・顔
-  R(OL,4,4,16,12); R('#d8944e',5,5,14,10); R('#eaa862',5,5,14,3); R('#b07038',5,12,14,3);
-  // くちばし
-  R(OL,5,10,14,9); R('#c87a00',6,11,12,7); R('#f09a00',7,11,10,2); R('#a06200',7,14,10,3);
-  R(OL,10,7,5,6); R('#e08800',10,8,5,5); R('#ffc000',11,8,3,2);
+  // 頭巾（roundRect）
+  RR(OL,2,0,20,17,5);RR('#08080e',3,1,18,16,4);RR('#16162a',3,1,18,5,4);R('#04040a',3,12,18,5);
+  R('#0e0c1c',2,4,3,11);R('#0e0c1c',19,4,3,11);
+  // 面・顔（ellipse）
+  ctx.fillStyle=OL;ctx.beginPath();ctx.ellipse(12,9,9,7,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#d8944e';ctx.beginPath();ctx.ellipse(12,9,8,6,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#eaa862';ctx.beginPath();ctx.ellipse(12,7,8,3,0,Math.PI,0);ctx.fill();
+  // くちばし（三角形）
+  ctx.fillStyle=OL;ctx.beginPath();ctx.moveTo(5,10);ctx.lineTo(4,17);ctx.lineTo(19,17);ctx.lineTo(19,10);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#c87a00';ctx.beginPath();ctx.moveTo(6,11);ctx.lineTo(5,16);ctx.lineTo(18,16);ctx.lineTo(18,11);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#f09a00';ctx.fillRect(6,11,12,2);
+  ctx.fillStyle=OL;ctx.beginPath();ctx.moveTo(10,7);ctx.lineTo(8,11);ctx.lineTo(14,11);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#e08800';ctx.beginPath();ctx.moveTo(10,8);ctx.lineTo(9,11);ctx.lineTo(13,11);ctx.closePath();ctx.fill();
   // 目（赤い輝き）
   const eg=_atk?'#ff8800':'#ff5500';
-  R(OL,5,4,7,6); R('#2a0000',6,5,5,5); R('#ff0000',6,5,5,4); R(eg,6,5,4,3); R('#ffcc44',7,5,3,1);
-  R(OL,14,4,7,6); R('#2a0000',14,5,5,5); R('#ff0000',14,5,5,4); R(eg,14,5,4,3); R('#ffcc44',15,5,3,1);
-  R('#660000',4,3,7,2); R('#660000',14,3,7,2);
-  // クローク動エフェクト
-  if(_wf>0){const ca=Math.sin(_wf/6)*.12;ctx.globalAlpha=Math.abs(ca)+.04;R('#1a1a30',-4,24,4,9);R('#1a1a30',24,24,4,9);ctx.globalAlpha=1;}
+  ctx.fillStyle=OL;ctx.beginPath();ctx.ellipse(8,6,4,4,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ff0000';ctx.beginPath();ctx.ellipse(8,6,3,3,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=eg;ctx.beginPath();ctx.ellipse(8,6,2,2,0,0,Math.PI*2);ctx.fill();
+  R('#ffcc44',7,5,2,1);
+  ctx.fillStyle=OL;ctx.beginPath();ctx.ellipse(16,6,4,4,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ff0000';ctx.beginPath();ctx.ellipse(16,6,3,3,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=eg;ctx.beginPath();ctx.ellipse(16,6,2,2,0,0,Math.PI*2);ctx.fill();
+  R('#ffcc44',15,5,2,1);
+  R('#660000',4,3,7,2);R('#660000',14,3,7,2);
+  if(_wf>0){const ca=Math.sin(_wf/6)*.12;ctx.globalAlpha=Math.abs(ca)+.04;RR('#1a1a30',-5,24,5,10,3);RR('#1a1a30',24,24,5,10,3);ctx.globalAlpha=1;}
 }
 
 function drawMataki(){
@@ -1466,48 +1479,55 @@ function drawMataki(){
   const wf=Math.floor(_wf/9)%2,la=wf?3:-3,ra=wf?-3:3;
   const ext=_atk===1?8:_atk===2?16:_atk>=3?24:0;
   const bk=_atk>0?4:0,air=_air;
-  // 脚
+  // 脚（角丸）
   const lya=air?-6:0,lyb=air?4:0;
-  R(OL,3+la,26+lya,13,17); R('#4e2c14',4+la,27+lya,11,15); R('#6a4020',4+la,27+lya,11,6); R('#2e1808',4+la,37+lya,11,5);
-  R(OL,16+ra,26+lyb,13,17); R('#4e2c14',17+ra,27+lyb,11,15); R('#6a4020',17+ra,27+lyb,11,6); R('#2e1808',17+ra,37+lyb,11,5);
-  R('#301808',10+la,26+lya,3,16); R('#301808',20+ra,26+lyb,3,16);
-  // 腰布・帯
-  R(OL,2,24,28,8); R('#8a6420',3,25,26,6); R('#ac8030',4,25,24,2); R('#5a3e10',3,29,26,2);
-  R(OL,11,22,10,5); R('#cc9400',12,23,8,3); R('#eebb00',13,23,6,1);
-  // 胴体（上半身裸・マッスル）
-  R(OL,2,10,28,16); R(SK2,3,11,26,14); R(SK2L,3,11,26,5); R(SK2D,3,20,26,5);
+  RR(OL,3+la,26+lya,13,17,4);RR('#4e2c14',4+la,27+lya,11,15,3);RR('#6a4020',4+la,27+lya,11,6,3);R('#2e1808',4+la,37+lya,11,5);
+  RR(OL,16+ra,26+lyb,13,17,4);RR('#4e2c14',17+ra,27+lyb,11,15,3);RR('#6a4020',17+ra,27+lyb,11,6,3);R('#2e1808',17+ra,37+lyb,11,5);
+  R('#301808',10+la,26+lya,3,16);R('#301808',20+ra,26+lyb,3,16);
+  // 腰布（roundRect）
+  RR(OL,2,24,28,8,4);RR('#8a6420',3,25,26,6,3);R('#ac8030',4,25,24,2);R('#5a3e10',3,29,26,2);
+  RR(OL,11,22,10,5,3);RR('#cc9400',12,23,8,3,2);R('#eebb00',13,23,6,1);
+  // 胴体（roundRect、マッスル）
+  RR(OL,2,10,28,16,5);RR(SK2,3,11,26,14,4);RR(SK2L,3,11,26,5,4);R(SK2D,3,20,26,5);
   R('#b04830',14,12,8,14);
-  for(let i=0;i<3;i++){R('#a83820',4,15+i*4,9,3);R('#a83820',19,15+i*4,9,3);R('#983010',13,15+i*4,7,2);}
-  // 丸い肩（arc・大きめ）
-  ctx.fillStyle=OL;ctx.beginPath();ctx.arc(3,13,10,Math.PI*.3,Math.PI*1.7);ctx.fill();
-  ctx.fillStyle=SK2;ctx.beginPath();ctx.arc(3,13,8,Math.PI*.3,Math.PI*1.7);ctx.fill();
-  ctx.fillStyle=SK2L;ctx.beginPath();ctx.arc(3,13,6,Math.PI*.3,Math.PI);ctx.fill();
-  ctx.fillStyle=OL;ctx.beginPath();ctx.arc(29,13,10,Math.PI*1.3,Math.PI*.7);ctx.fill();
-  ctx.fillStyle=SK2;ctx.beginPath();ctx.arc(29,13,8,Math.PI*1.3,Math.PI*.7);ctx.fill();
-  // 後腕（攻撃で大きく引く）
-  R(OL,-bk,10,8,22); R(SK2,1-bk,11,6,20); R(SK2L,1-bk,11,6,6); R(SK2D,1-bk,24,6,6);
-  R(OL,-bk-2,28,11,10); R('#882e1e',1-bk-2,29,9,8); R('#a03828',1-bk-1,29,7,4);
-  // 前腕・拳（攻撃でext伸びる）
+  for(let i=0;i<3;i++){RR('#a83820',4,15+i*4,9,3,2);RR('#a83820',19,15+i*4,9,3,2);R('#983010',13,15+i*4,7,2);}
+  // 丸い肩（arc・大）
+  ctx.fillStyle=OL;ctx.beginPath();ctx.arc(3,13,11,Math.PI*.3,Math.PI*1.7);ctx.fill();
+  ctx.fillStyle=SK2;ctx.beginPath();ctx.arc(3,13,9,Math.PI*.3,Math.PI*1.7);ctx.fill();
+  ctx.fillStyle=SK2L;ctx.beginPath();ctx.arc(3,13,7,Math.PI*.3,Math.PI);ctx.fill();
+  ctx.fillStyle=OL;ctx.beginPath();ctx.arc(29,13,11,Math.PI*1.3,Math.PI*.7);ctx.fill();
+  ctx.fillStyle=SK2;ctx.beginPath();ctx.arc(29,13,9,Math.PI*1.3,Math.PI*.7);ctx.fill();
+  // 後腕（太いカプセル）
+  cap(OL,-bk-1,9,9,23);cap(SK2,-bk,10,7,21);cap(SK2L,-bk,10,7,7);
+  cap(OL,-bk-2,28,12,11);cap('#882e1e',-bk-1,29,10,9);RR('#a03828',-bk,29,8,5,3);
+  // 前腕・拳（攻撃：ext伸び）
   if(_atk>0){
     const eA=Math.floor(ext*.2),eB=Math.floor(ext*.4);
-    R(OL,25,9,7+eA,20); R(SK2,26,10,5+eA,18); R(SK2L,26,10,5+eA,6); R(SK2D,26,22+eA,5,6);
-    R(OL,29+eB,7,12+eA,14); R('#882e1e',30+eB,8,10+eA,12); R('#a03828',31+eB,8,8+eA,5);
-    if(_atk>=3){ctx.globalAlpha=0.55;R('#cc4400',29+ext,5,16,18);ctx.globalAlpha=0.25;R('#ff8800',27+ext,3,20,22);ctx.globalAlpha=1;}
+    cap(OL,24,8,9,21);cap(SK2,25,9,7,19);cap(SK2L,25,9,7,7);
+    cap(OL,29+eB,6,13+eA,16);cap('#882e1e',30+eB,7,11+eA,14);RR('#a03828',31+eB,7,9+eA,6,3);
+    if(_atk>=3){ctx.globalAlpha=0.55;RR('#cc4400',29+ext,4,18,20,5);ctx.globalAlpha=0.25;RR('#ff8800',27+ext,2,22,24,6);ctx.globalAlpha=1;}
   }else{
-    R(OL,25,10,7,22); R(SK2,26,11,5,20); R(SK2L,26,11,5,6); R(SK2D,26,24,5,6);
-    R(OL,23,28,11,10); R('#882e1e',24,29,9,8); R('#a03828',25,29,7,4);
+    cap(OL,24,9,9,23);cap(SK2,25,10,7,21);cap(SK2L,25,10,7,7);
+    cap(OL,22,27,12,11);cap('#882e1e',23,28,10,9);RR('#a03828',24,28,8,5,3);
   }
-  // 首
-  R(OL,12,8,8,5); R(SK2,13,9,6,4);
-  // 頭
-  R(OL,4,0,24,13); R(SK2,5,1,22,12); R(SK2L,5,1,22,4); R(SK2D,5,9,22,4);
+  // 首（カプセル）
+  cap(OL,12,8,8,6);cap(SK2,13,9,6,5);
+  // 頭（大きいellipse）
+  ctx.fillStyle=OL;ctx.beginPath();ctx.ellipse(16,6,13,9,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=SK2;ctx.beginPath();ctx.ellipse(16,6,12,8,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=SK2L;ctx.beginPath();ctx.ellipse(16,4,12,4,0,Math.PI,0);ctx.fill();
+  ctx.fillStyle=SK2D;ctx.beginPath();ctx.ellipse(16,10,12,4,0,0,Math.PI);ctx.fill();
   // 鉢巻き
-  R('#f0f0f0',4,1,24,6); R('#ffffff',5,1,22,2); R('#aaaaaa',4,5,6,2); R('#aaaaaa',22,5,6,2);
-  R(OL,4,1,3,6); R(OL,25,1,3,6);
+  R('#f0f0f0',4,1,24,6);R('#ffffff',5,1,22,2);R('#aaaaaa',4,5,6,2);R('#aaaaaa',22,5,6,2);
+  R(OL,4,1,3,6);R(OL,25,1,3,6);
   // 目
-  const ey=_atk?6:7;
-  R(OL,7,ey,8,5); R('#f4ecd8',8,ey+1,6,4); R('#222',9,ey+1,4,3); R('#555',10,ey+1,2,2); R('#fff',10,ey+1,1,1);
-  R(OL,17,ey,8,5); R('#f4ecd8',17,ey+1,6,4); R('#222',18,ey+1,4,3); R('#555',19,ey+1,2,2); R('#fff',19,ey+1,1,1);
+  const ey=_atk?5:6;
+  R(OL,7,ey,8,6);R('#f4ecd8',8,ey+1,6,5);
+  ctx.fillStyle='#222';ctx.beginPath();ctx.ellipse(11,ey+3,2.5,2.5,0,0,Math.PI*2);ctx.fill();
+  R('#fff',10,ey+2,1,1);
+  R(OL,17,ey,8,6);R('#f4ecd8',17,ey+1,6,5);
+  ctx.fillStyle='#222';ctx.beginPath();ctx.ellipse(20,ey+3,2.5,2.5,0,0,Math.PI*2);ctx.fill();
+  R('#fff',19,ey+2,1,1);
   if(_atk){R(OL,5,ey-1,13,4);R(OL,17,ey-1,13,4);}else{R(OL,5,5,11,3);R(OL,17,5,11,3);}
   if(_atk){R(OL,10,12,12,5);R('#f8b060',11,13,10,3);}else{R('#cc3020',12,12,9,3);R('#aa1810',13,11,7,2);}
 }
@@ -1516,55 +1536,67 @@ function drawMomotaro(){
   const wf=Math.floor(_wf/9)%2,la=wf?3:-3,ra=wf?-3:3;
   const ext=_atk===1?7:_atk===2?14:_atk>=3?22:0;
   const bk=_atk>0?3:0,air=_air;
-  // 刀（待機：鞘・攻撃：抜いてext伸びる）
+  // 刀
   if(_atk>0){
-    R(OL,8,13,23+ext,5); R('#9898a8',9,14,21+ext,3); R('#c8ccd8',9,14,21+ext,1);
-    R(OL,28+ext,11,8,8); R('#cc9800',29+ext,12,6,5); R('#e8c000',30+ext,12,4,2);
+    R(OL,8,13,23+ext,5);R('#9898a8',9,14,21+ext,3);R('#c8ccd8',9,14,21+ext,1);
+    R(OL,28+ext,11,8,8);R('#cc9800',29+ext,12,6,5);R('#e8c000',30+ext,12,4,2);
   }else{
-    R(OL,23,0,5,30); R('#9898a8',24,0,3,30); R('#c8ccd8',24,0,3,24);
-    R(OL,21,0,8,8); R('#cc9800',22,1,6,5); R('#8a6e10',22,0,5,3);
+    R(OL,23,0,5,30);R('#9898a8',24,0,3,30);R('#c8ccd8',24,0,3,24);
+    R(OL,21,0,8,8);R('#cc9800',22,1,6,5);R('#8a6e10',22,0,5,3);
   }
-  // 脚（袴）
+  // 脚（袴、角丸）
   const lya=air?-5:0,lyb=air?3:0;
-  R(OL,5+la,26+lya,10,15); R('#1a3878',6+la,27+lya,8,13); R('#2a4a98',6+la,27+lya,8,5); R('#0e2860',6+la,37+lya,8,4);
-  R(OL,14+ra,26+lyb,10,15); R('#1a3878',15+ra,27+lyb,8,13); R('#2a4a98',15+ra,27+lyb,8,5); R('#0e2860',15+ra,37+lyb,8,4);
-  R('#102260',10+la,26+lya,2,14); R('#102260',18+ra,26+lyb,2,14);
-  // 陣羽織
-  R(OL,2,10,24,18); R('#cc1100',3,11,22,16); R('#ee2200',3,11,22,5); R('#991000',3,21,22,5);
-  R('#f8f8f8',5,12,18,12); R('#e0e0e0',6,13,16,10); R('#c8c8c8',11,13,6,10);
-  R(OL,3,11,3,16); R(OL,22,11,3,16);
-  // 桃の家紋
-  R(OL,10,16,8,8); R('#ff88aa',11,17,6,6); R('#ff4488',12,18,4,4); R('#ffbbcc',11,17,6,2);
+  RR(OL,5+la,26+lya,10,15,3);RR('#1a3878',6+la,27+lya,8,13,2);RR('#2a4a98',6+la,27+lya,8,5,2);R('#0e2860',6+la,37+lya,8,4);
+  RR(OL,14+ra,26+lyb,10,15,3);RR('#1a3878',15+ra,27+lyb,8,13,2);RR('#2a4a98',15+ra,27+lyb,8,5,2);R('#0e2860',15+ra,37+lyb,8,4);
+  R('#102260',10+la,26+lya,2,14);R('#102260',18+ra,26+lyb,2,14);
+  // 陣羽織（roundRect）
+  RR(OL,2,10,24,18,5);RR('#cc1100',3,11,22,16,4);RR('#ee2200',3,11,22,5,4);R('#991000',3,21,22,5);
+  RR('#f8f8f8',5,12,18,12,3);RR('#e0e0e0',6,13,16,10,2);R('#c8c8c8',11,13,6,10);
+  R(OL,3,11,3,16);R(OL,22,11,3,16);
+  // 桃の家紋（ellipse）
+  R(OL,10,16,8,8);
+  ctx.fillStyle='#ff88aa';ctx.beginPath();ctx.ellipse(14,20,4,4,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ff4488';ctx.beginPath();ctx.ellipse(14,21,3,3,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ffbbcc';ctx.beginPath();ctx.ellipse(14,19,3,2,0,Math.PI,0);ctx.fill();
   // 丸い肩（arc）
-  ctx.fillStyle=OL;ctx.beginPath();ctx.arc(4,12,8,Math.PI*.35,Math.PI*1.65);ctx.fill();
-  ctx.fillStyle='#cc1100';ctx.beginPath();ctx.arc(4,12,6,Math.PI*.35,Math.PI*1.65);ctx.fill();
-  ctx.fillStyle='#ee3300';ctx.beginPath();ctx.arc(4,12,4,Math.PI*.35,Math.PI);ctx.fill();
-  ctx.fillStyle=OL;ctx.beginPath();ctx.arc(24,12,8,Math.PI*1.35,Math.PI*.65);ctx.fill();
-  ctx.fillStyle='#cc1100';ctx.beginPath();ctx.arc(24,12,6,Math.PI*1.35,Math.PI*.65);ctx.fill();
-  // 後腕（攻撃で引く）
-  R(OL,-bk,12,6,15); R('#d09050',1-bk,13,4,13); R('#e8a860',1-bk,13,4,4); R('#a06820',1-bk,21,4,6);
-  // 前腕（攻撃でext伸びる）
+  ctx.fillStyle=OL;ctx.beginPath();ctx.arc(4,12,9,Math.PI*.35,Math.PI*1.65);ctx.fill();
+  ctx.fillStyle='#cc1100';ctx.beginPath();ctx.arc(4,12,7,Math.PI*.35,Math.PI*1.65);ctx.fill();
+  ctx.fillStyle='#ee3300';ctx.beginPath();ctx.arc(4,12,5,Math.PI*.35,Math.PI);ctx.fill();
+  ctx.fillStyle=OL;ctx.beginPath();ctx.arc(24,12,9,Math.PI*1.35,Math.PI*.65);ctx.fill();
+  ctx.fillStyle='#cc1100';ctx.beginPath();ctx.arc(24,12,7,Math.PI*1.35,Math.PI*.65);ctx.fill();
+  // 後腕（カプセル）
+  cap(OL,-bk-1,12,6,15);cap('#d09050',-bk,13,4,13);cap('#e8a860',-bk,13,4,5);
+  // 前腕（攻撃：ext伸び）
   if(_atk>0){
     const eA=Math.floor(ext*.2),eB=Math.floor(ext*.4);
-    R(OL,20,11,6+eA,9); R('#d09050',21,12,4+eA,7); R('#e8a860',21,12,4+eA,3);
-    R(OL,24+eB,9,6+eA,9); R('#d09050',25+eB,10,4+eA,7); R('#e8a860',25+eB,10,4+eA,2);
-    R(OL,28+eB+eA,8,6,7); R('#a06820',29+eB+eA,9,4,5);
-    if(_atk>=3){ctx.globalAlpha=0.5;R('#ffcc44',28+ext,8,12,8);ctx.globalAlpha=0.2;R('#ffffff',26+ext,6,16,12);ctx.globalAlpha=1;}
+    cap(OL,20,10,7,10);cap('#d09050',21,11,5,8);cap('#e8a860',21,11,5,3);
+    cap(OL,24+eB,8,7,10);cap('#d09050',25+eB,9,5,8);cap('#e8a860',25+eB,9,5,3);
+    cap(OL,28+eB+eA,7,7,9);RR('#a06820',29+eB+eA,8,5,7,2);
+    if(_atk>=3){ctx.globalAlpha=0.5;RR('#ffcc44',28+ext,7,14,10,4);ctx.globalAlpha=0.2;RR('#ffffff',26+ext,5,18,14,5);ctx.globalAlpha=1;}
   }else{
-    R(OL,20,13,7,13); R('#d09050',21,14,5,11); R('#e8a860',21,14,5,4); R('#a06820',21,21,5,5);
+    cap(OL,20,12,7,14);cap('#d09050',21,13,5,12);cap('#e8a860',21,13,5,5);
+    RR('#a06820',22,22,5,6,2);
   }
-  // 首
-  R(OL,10,9,8,4); R('#d8944e',11,10,6,3);
-  R('#180a02',5,0,4,9); R('#180a02',19,0,4,9);
-  // 頭
-  R(OL,6,0,16,12); R('#d8944e',7,1,14,11); R('#f0a860',7,1,14,4); R('#b07038',7,9,14,3);
+  // 首（カプセル）
+  cap(OL,10,9,8,5);cap('#d8944e',11,10,6,4);
+  // 後頭部
+  R('#180a02',5,0,4,9);R('#180a02',19,0,4,9);
+  // 頭（ellipse）
+  ctx.fillStyle=OL;ctx.beginPath();ctx.ellipse(14,6,10,8,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#d8944e';ctx.beginPath();ctx.ellipse(14,6,9,7,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#f0a860';ctx.beginPath();ctx.ellipse(14,4,9,4,0,Math.PI,0);ctx.fill();
+  ctx.fillStyle='#b07038';ctx.beginPath();ctx.ellipse(14,9,9,3,0,0,Math.PI);ctx.fill();
   // 髷
-  R(OL,8,0,12,6); R('#180a02',9,1,10,5); R('#2a1004',10,1,8,3); R('#0a0402',13,1,4,8);
-  R('#140802',5,1,4,8); R('#140802',19,1,4,8);
+  RR(OL,8,0,12,6,3);R('#180a02',9,1,10,5);R('#2a1004',10,1,8,3);R('#0a0402',13,1,4,8);
+  R('#140802',5,1,4,8);R('#140802',19,1,4,8);
   // 目
   const ey=_atk?4:5;
-  R(OL,7,ey,7,5); R('#f8f0e0',8,ey+1,5,4); R('#1840a8',8,ey+1,4,3); R(OL,9,ey+1,3,2); R('#fff',9,ey+1,1,1);
-  R(OL,16,ey,7,5); R('#f8f0e0',16,ey+1,5,4); R('#1840a8',16,ey+1,4,3); R(OL,17,ey+1,3,2); R('#fff',17,ey+1,1,1);
+  R(OL,7,ey,7,5);R('#f8f0e0',8,ey+1,5,4);
+  ctx.fillStyle='#1840a8';ctx.beginPath();ctx.ellipse(10.5,ey+3,2.5,2.5,0,0,Math.PI*2);ctx.fill();
+  R(OL,10,ey+2,2,2);R('#fff',10,ey+2,1,1);
+  R(OL,16,ey,7,5);R('#f8f0e0',16,ey+1,5,4);
+  ctx.fillStyle='#1840a8';ctx.beginPath();ctx.ellipse(18.5,ey+3,2.5,2.5,0,0,Math.PI*2);ctx.fill();
+  R(OL,18,ey+2,2,2);R('#fff',18,ey+2,1,1);
   if(_atk){R('#1a1a1a',7,ey-1,6,3);R('#1a1a1a',17,ey-1,6,3);}else{R(OL,6,4,8,2);R(OL,16,4,8,2);}
   if(_atk){R(OL,9,11,9,4);R('#f8b070',10,12,7,2);}else{R('#c05050',10,11,7,2);R('#d06060',12,10,5,1);}
 }
